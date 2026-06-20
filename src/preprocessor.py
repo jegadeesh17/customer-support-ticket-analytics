@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 from src.constants import ID_COLS, LEAKAGE_COLS, TEXT_COL, DEFAULT_INFERENCE_ROW
 from src.label_engineering import _text_score
@@ -62,20 +61,6 @@ def engineer_features(df, task_type='classification'):
         )
 
     return df_fe
-
-
-def satisfaction_to_class(series):
-    """Map 1-5 satisfaction score to Low / Mid / High."""
-    def _map(score):
-        if pd.isna(score):
-            return np.nan
-        if score <= 2:
-            return 'Low'
-        if score == 3:
-            return 'Mid'
-        return 'High'
-
-    return series.apply(_map)
 
 
 def build_inference_row(user_inputs=None):

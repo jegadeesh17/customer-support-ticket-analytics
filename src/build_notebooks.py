@@ -234,7 +234,7 @@ fe_df['satisfaction_class'].value_counts()'''),
         _cell('markdown', '## Step 5: Train-Test Split'),
         _cell('code', '''from sklearn.model_selection import train_test_split
 
-X = fe_df.drop(columns=['customer_satisfaction_score', 'satisfaction_class'])
+X = fe_df.drop(columns=['satisfaction_class'])
 for col in X.select_dtypes(include=['object']).columns:
     X[col] = X[col].fillna('Unknown')
 y = fe_df['satisfaction_class']

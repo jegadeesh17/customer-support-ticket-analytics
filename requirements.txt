@@ -10,6 +10,3 @@ notebook
 matplotlib
 seaborn
 joblib
-shap
-imbalanced-learn
-openpyxl
