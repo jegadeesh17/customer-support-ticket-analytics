@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.py[cod]
+.vscode/
+.ipynb_checkpoints/
+docs/_extracted.txt
+Customer Support Tickets Analytics Project.docx
+models/*.pkl

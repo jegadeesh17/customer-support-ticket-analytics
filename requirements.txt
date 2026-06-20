@@ -1,0 +1,15 @@
+streamlit
+pandas
+numpy
+scikit-learn
+sqlalchemy
+psycopg2-binary
+python-dotenv
+jupyter
+notebook
+matplotlib
+seaborn
+joblib
+shap
+imbalanced-learn
+openpyxl
