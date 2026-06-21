@@ -10,7 +10,13 @@ if PROJECT_ROOT not in sys.path:
 from src.constants import PRIORITY_LEVELS
 from src.inference import load_sample_ticket, predict_classification
 
-st.set_page_config(page_title='Classification: Ticket Priority', page_icon='🔴')
+# Ensure app is in path so we can import nav
+APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if APP_DIR not in sys.path:
+    sys.path.insert(0, APP_DIR)
+from app import render_nav
+
+st.set_page_config(page_title='Priority Routing', page_icon='⚡', layout='wide', initial_sidebar_state='collapsed')
 
 PRODUCTS = [
     'Web Portal', 'Mobile App', 'Payment Gateway', 'E-commerce Store',
@@ -19,8 +25,9 @@ PRODUCTS = [
 SUBSCRIPTIONS = ['Free', 'Basic', 'Premium', 'Enterprise']
 CHANNELS = ['Email', 'Chat', 'Phone', 'Social Media', 'Web Form']
 
-st.title('Classification: Ticket Priority Prediction 🔴')
+st.title('Priority Routing ⚡')
 st.markdown('Predict ticket **priority** from description and customer metadata.')
+render_nav()
 
 if 'cls_sample' not in st.session_state:
     st.session_state.cls_sample = load_sample_ticket()

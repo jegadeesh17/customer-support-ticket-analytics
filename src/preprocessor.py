@@ -18,6 +18,8 @@ def clean_data(df, task_type='classification', drop_leakage=True):
     if drop_leakage:
         if task_type == 'regression':
             leakage = [c for c in LEAKAGE_COLS if c != 'resolution_time_hours']
+        elif task_type == 'satisfaction':
+            leakage = [c for c in LEAKAGE_COLS if c != 'customer_satisfaction_score']
         else:
             leakage = list(LEAKAGE_COLS)
         cols_to_drop.extend(leakage)

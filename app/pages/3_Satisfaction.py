@@ -10,13 +10,20 @@ if PROJECT_ROOT not in sys.path:
 from src.constants import PRIORITY_LEVELS
 from src.inference import load_sample_ticket, predict_satisfaction
 
-st.set_page_config(page_title='Satisfaction Prediction', page_icon='⭐')
+# Ensure app is in path so we can import nav
+APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if APP_DIR not in sys.path:
+    sys.path.insert(0, APP_DIR)
+from app import render_nav
+
+st.set_page_config(page_title='Satisfaction Insights', page_icon='😊', layout='wide', initial_sidebar_state='collapsed')
 
 CHANNELS = ['Email', 'Chat', 'Phone', 'Social Media', 'Web Form']
 SUBSCRIPTIONS = ['Free', 'Basic', 'Premium', 'Enterprise']
 
-st.title('Customer Satisfaction Prediction ⭐')
+st.title('Satisfaction Insights 😊')
 st.markdown('Predict **satisfaction level** (Low / Mid / High) from ticket characteristics.')
+render_nav()
 
 if 'sat_sample' not in st.session_state:
     st.session_state.sat_sample = load_sample_ticket()

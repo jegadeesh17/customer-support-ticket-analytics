@@ -47,6 +47,7 @@ class MLPRegressorWrapper(BaseEstimator, RegressorMixin):
 
     def fit(self, X, y):
         self.model.fit(X, y)
+        self.is_fitted_ = True
         return self
 
     def predict(self, X):

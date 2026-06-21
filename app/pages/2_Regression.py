@@ -10,10 +10,17 @@ if PROJECT_ROOT not in sys.path:
 from src.constants import PRIORITY_LEVELS
 from src.inference import load_sample_ticket, predict_regression
 
-st.set_page_config(page_title='Regression: Resolution Time', page_icon='⏱️')
+# Ensure app is in path so we can import nav
+APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if APP_DIR not in sys.path:
+    sys.path.insert(0, APP_DIR)
+from app import render_nav
 
-st.title('Regression: Resolution Time Prediction ⏱️')
+st.set_page_config(page_title='SLA Prediction', page_icon='⏱️', layout='wide', initial_sidebar_state='collapsed')
+
+st.title('SLA Prediction ⏱️')
 st.markdown('Estimate **resolution time in hours** for incoming support tickets.')
+render_nav()
 
 if 'reg_sample' not in st.session_state:
     st.session_state.reg_sample = load_sample_ticket()
