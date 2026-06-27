@@ -58,8 +58,8 @@ def _align_to_training_columns(processed, model):
 
 def _prepare_features(raw_df, task_type, model):
     processed = preprocess_for_inference(raw_df, task_type=task_type)
-    for col in processed.select_dtypes(include=['object']).columns:
-        processed[col] = processed[col].fillna('Unknown')
+    if 'issue_description' in processed.columns:
+        processed['issue_description'] = processed['issue_description'].fillna('')
     return _align_to_training_columns(processed, model)
 
 

@@ -21,9 +21,12 @@ def _text_score(text):
 
 
 def derive_priority_label(df):
-    """Rule-based priority aligned with text urgency and ticket metadata."""
+    """Rule-based priority aligned with text urgency and ticket metadata, with added noise."""
     labels = []
-    for _, row in df.iterrows():
+    np.random.seed(42)
+    noise = np.random.normal(0, 0.4, len(df))
+    
+    for i, (_, row) in enumerate(df.iterrows()):
         score = _text_score(row.get('issue_description', ''))
         score += int(pd.to_numeric(row.get('issue_complexity_score', 5), errors='coerce') or 5) // 3
         score += int(pd.to_numeric(row.get('previous_tickets', 0), errors='coerce') or 0) // 6
@@ -31,11 +34,14 @@ def derive_priority_label(df):
             score += 1
         if str(row.get('sla_breached', '')).lower() == 'yes':
             score += 1
-        if score >= 5:
+            
+        score += noise[i]
+        
+        if score >= 4.5:
             labels.append('Urgent')
-        elif score >= 3:
+        elif score >= 2.5:
             labels.append('High')
-        elif score >= 1:
+        elif score >= 0.5:
             labels.append('Medium')
         else:
             labels.append('Low')
@@ -51,12 +57,16 @@ def derive_resolution_hours(df):
     prev = pd.to_numeric(df.get('previous_tickets', 0), errors='coerce').fillna(0)
     desc_len = df.get('issue_description', '').fillna('').astype(str).str.len()
 
+    np.random.seed(42)
+    noise = np.random.normal(0, 5.0, len(df))
+
     hours = (
         priority.map(priority_hours)
         + complexity * 4.5
         + response * 0.6
         + prev * 1.2
         + desc_len * 0.04
+        + noise
     )
     return hours.clip(4, 240)
 
@@ -74,5 +84,9 @@ def derive_satisfaction_class(df):
     score -= (complexity > 7).astype(int)
     score -= (prev > 10).astype(int)
     score -= sla * 2
+    
+    np.random.seed(42)
+    noise = np.random.normal(0, 0.35, len(df))
+    score = score + noise
 
-    return score.apply(lambda s: 'High' if s >= 3 else ('Mid' if s == 2 else 'Low'))
+    return score.apply(lambda s: 'High' if s >= 2.5 else ('Mid' if s >= 1.5 else 'Low'))

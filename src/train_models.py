@@ -45,20 +45,22 @@ def _sample_df(df, n=TRAIN_SAMPLE):
     return df
 
 
-def _impute_object_columns(X):
+def _fill_text_column(X):
     X = X.copy()
-    for col in X.select_dtypes(include=['object']).columns:
-        X[col] = X[col].fillna('Unknown')
+    if 'issue_description' in X.columns:
+        X['issue_description'] = X['issue_description'].fillna('')
     return X
 
 
 def train_classification(df, models_dir):
     print('\n=== Classification (Priority) ===')
-    df_cls = engineer_features(clean_data(df, 'classification'), 'classification')
+    df = df.copy()
+    df['priority'] = derive_priority_label(df)
+    df_cls = clean_data(df, 'classification')
+    df_cls = engineer_features(df_cls, 'classification')
     df_cls = _sample_df(df_cls)
-    df_cls['priority'] = derive_priority_label(df_cls)
 
-    X = _impute_object_columns(df_cls.drop(columns=['priority']))
+    X = _fill_text_column(df_cls.drop(columns=['priority']))
     y = df_cls['priority']
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -89,11 +91,13 @@ def train_classification(df, models_dir):
 
 def train_regression(df, models_dir):
     print('\n=== Regression (Resolution Time) ===')
-    df_reg = engineer_features(clean_data(df, 'regression'), 'regression')
+    df = df.copy()
+    df['resolution_time_hours'] = derive_resolution_hours(df)
+    df_reg = clean_data(df, 'regression')
+    df_reg = engineer_features(df_reg, 'regression')
     df_reg = _sample_df(df_reg)
-    df_reg['resolution_time_hours'] = derive_resolution_hours(df_reg)
 
-    X = _impute_object_columns(df_reg.drop(columns=['resolution_time_hours']))
+    X = _fill_text_column(df_reg.drop(columns=['resolution_time_hours']))
     y = np.log1p(df_reg['resolution_time_hours'])
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -137,11 +141,13 @@ def train_regression(df, models_dir):
 
 def train_satisfaction(df, models_dir):
     print('\n=== Satisfaction Classification ===')
-    df_sat = engineer_features(clean_data(df, 'satisfaction'), 'satisfaction')
+    df = df.copy()
+    df['satisfaction_class'] = derive_satisfaction_class(df)
+    df_sat = clean_data(df, 'satisfaction')
+    df_sat = engineer_features(df_sat, 'satisfaction')
     df_sat = _sample_df(df_sat)
-    df_sat['satisfaction_class'] = derive_satisfaction_class(df_sat)
 
-    X = _impute_object_columns(df_sat.drop(columns=['satisfaction_class']))
+    X = _fill_text_column(df_sat.drop(columns=['satisfaction_class']))
     y = df_sat['satisfaction_class']
 
     X_train, X_test, y_train, y_test = train_test_split(

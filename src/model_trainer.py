@@ -14,20 +14,25 @@ TFIDF_MAX_FEATURES = 3000
 
 
 class MLPClassifierWrapper(BaseEstimator, ClassifierMixin):
-    """Wrap MLPClassifier to encode string labels."""
+    """Wrap MLPClassifier to encode string labels to bypass sklearn early_stopping bug."""
 
-    def __init__(self):
-        self.encoder = LabelEncoder()
-        self.model = MLPClassifier(
-            hidden_layer_sizes=(128, 64),
-            max_iter=300,
-            random_state=RANDOM_SEED,
-            early_stopping=True,
-            validation_fraction=0.1,
-        )
+    def __init__(self, hidden_layer_sizes=(128, 64), max_iter=300, random_state=42, early_stopping=True, validation_fraction=0.1):
+        self.hidden_layer_sizes = hidden_layer_sizes
+        self.max_iter = max_iter
+        self.random_state = random_state
+        self.early_stopping = early_stopping
+        self.validation_fraction = validation_fraction
 
     def fit(self, X, y):
+        self.encoder = LabelEncoder()
         y_enc = self.encoder.fit_transform(y)
+        self.model = MLPClassifier(
+            hidden_layer_sizes=self.hidden_layer_sizes,
+            max_iter=self.max_iter,
+            random_state=self.random_state,
+            early_stopping=self.early_stopping,
+            validation_fraction=self.validation_fraction,
+        )
         self.model.fit(X, y_enc)
         self.classes_ = self.encoder.classes_
         return self
@@ -35,23 +40,8 @@ class MLPClassifierWrapper(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         return self.encoder.inverse_transform(self.model.predict(X))
 
-
-class MLPRegressorWrapper(BaseEstimator, RegressorMixin):
-    def __init__(self):
-        self.model = MLPRegressor(
-            hidden_layer_sizes=(128, 64),
-            max_iter=200,
-            random_state=RANDOM_SEED,
-            early_stopping=False,
-        )
-
-    def fit(self, X, y):
-        self.model.fit(X, y)
-        self.is_fitted_ = True
-        return self
-
-    def predict(self, X):
-        return self.model.predict(X)
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
 
 
 def build_feature_transformer(X_train, include_text=True):
@@ -112,7 +102,7 @@ def get_classification_pipelines(X_train):
         ]),
         'Neural Network (MLP)': Pipeline([
             ('preprocessor', build_feature_transformer(X_train, include_text=True)),
-            ('classifier', MLPClassifierWrapper()),
+            ('classifier', MLPClassifierWrapper(random_state=RANDOM_SEED)),
         ]),
     }
 
@@ -130,7 +120,12 @@ def get_regression_pipelines(X_train):
         ]),
         'Neural Network (MLP)': Pipeline([
             ('preprocessor', build_feature_transformer(X_train, include_text=True)),
-            ('regressor', MLPRegressorWrapper()),
+            ('regressor', MLPRegressor(
+                hidden_layer_sizes=(128, 64),
+                max_iter=200,
+                random_state=RANDOM_SEED,
+                early_stopping=False,
+            )),
         ]),
     }
 
@@ -150,6 +145,6 @@ def get_satisfaction_pipelines(X_train):
         ]),
         'Neural Network (MLP)': Pipeline([
             ('preprocessor', build_feature_transformer(X_train, include_text=True)),
-            ('classifier', MLPClassifierWrapper()),
+            ('classifier', MLPClassifierWrapper(random_state=RANDOM_SEED)),
         ]),
     }

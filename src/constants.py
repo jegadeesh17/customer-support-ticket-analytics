@@ -9,6 +9,9 @@ LEAKAGE_COLS = [
     'status',
     'customer_satisfaction_score',
     'resolution_time_hours',
+    'first_response_time_hours',
+    'escalated',
+    'sla_breached',
 ]
 
 TEXT_COL = 'issue_description'

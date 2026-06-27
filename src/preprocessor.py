@@ -19,7 +19,7 @@ def clean_data(df, task_type='classification', drop_leakage=True):
         if task_type == 'regression':
             leakage = [c for c in LEAKAGE_COLS if c != 'resolution_time_hours']
         elif task_type == 'satisfaction':
-            leakage = [c for c in LEAKAGE_COLS if c != 'customer_satisfaction_score']
+            leakage = [c for c in LEAKAGE_COLS if c not in ('customer_satisfaction_score', 'first_response_time_hours', 'escalated', 'sla_breached')]
         else:
             leakage = list(LEAKAGE_COLS)
         cols_to_drop.extend(leakage)
@@ -54,8 +54,6 @@ def engineer_features(df, task_type='classification'):
 
     if task_type == 'regression' and 'resolution_time_hours' in df_fe.columns:
         df_fe['resolution_time_hours'] = pd.to_numeric(df_fe['resolution_time_hours'], errors='coerce')
-        cap = df_fe['resolution_time_hours'].quantile(0.99)
-        df_fe['resolution_time_hours'] = df_fe['resolution_time_hours'].clip(upper=cap)
 
     if task_type == 'satisfaction' and 'customer_satisfaction_score' in df_fe.columns:
         df_fe['customer_satisfaction_score'] = pd.to_numeric(
