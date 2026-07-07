@@ -196,6 +196,13 @@ def train_and_save_models():
     print(f'Regression R2:           {reg_r2:.4f} (target >= 0.70)')
     print(f'Satisfaction accuracy:   {sat_acc:.4f} (target >= 0.75)')
 
+    try:
+        from scripts.export_evaluation import write_reports
+
+        write_reports()
+    except Exception as exc:
+        print(f'Could not write evaluation report: {exc}')
+
 
 if __name__ == '__main__':
     train_and_save_models()

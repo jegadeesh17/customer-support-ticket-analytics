@@ -1,4 +1,19 @@
-# Customer Support Tickets Analytics
+# Customer Support Tickets Analytics — Support Ops Intelligence
+---
+### **3-Command Quickstart**
+```powershell
+pip install -r requirements.txt
+python src/train_models.py
+streamlit run app/app.py
+```
+
+**API:**
+```powershell
+uvicorn api.main:app --port 8002
+```
+
+**Evaluation report:** `reports/evaluation.md` (generated after training)
+
 ---
 ### **Project Overview**
 Machine learning platform for customer support ticket analysis. The project covers three tasks aligned with the course requirements:
@@ -52,6 +67,17 @@ Inference builds a full feature row from user inputs plus defaults so sklearn pi
 
 **Note:** The bundled CSV has weak label signal in raw columns. Training uses rule-based label engineering (`src/label_engineering.py`) so models learn meaningful patterns from text urgency, complexity, and service metrics — suitable for end-to-end pipeline demonstration.
 
+### Data Caveats and Mitigation
+- This project is built as an **applied pipeline demonstration** where targets are engineered from business-style heuristics.
+- Priority, resolution hours, and satisfaction labels are derived using deterministic rules plus controlled noise in `src/label_engineering.py`.
+- Because targets are engineered, very high scores can occur when model features strongly align with generation rules.
+- To avoid over-claiming, treat reported metrics as **pipeline validity indicators**, not production KPI guarantees from human-labeled ground truth.
+
+### Leakage Defense Notes
+- Regression training intentionally drops direct leakage columns (`resolution_time_hours`, `ticket_id`) and only keeps usable predictors.
+- Inference path builds full feature schema consistently so train/serve mismatch is minimized.
+- Remaining caveat: some engineered targets and feature inputs share related signals by design; this is disclosed and should be discussed transparently in interviews.
+
 ---
 ### **Model Performance**
 Run `python src/train_models.py` to print current metrics. Targets from the project brief:
@@ -62,12 +88,35 @@ Run `python src/train_models.py` to print current metrics. Targets from the proj
 | Resolution time regression | R² ≥ 0.70 |
 | Satisfaction classification | ≥ 75% accuracy |
 
+Interpretation guidance:
+- If observed metrics are near-perfect, validate against caveat notes above before claiming real-world generalization.
+- Prefer reporting this project as an end-to-end ML system design and modeling workflow demonstration.
+
 ---
 ### **Interactive Application Deployment**
 ```bash
 streamlit run app/app.py
 ```
 Use **Load sample ticket** on each page to populate the form from the dataset, then submit to get predictions.
+
+#### **3-Command Quickstart**
+```bash
+pip install -r requirements.txt
+python src/load_data_to_db.py && python src/train_models.py
+streamlit run app/app.py
+```
+
+#### **Sample Input / Output**
+- Input ticket: "Payment failed twice after renewal, account locked, need urgent access."
+- Typical output:
+  - Priority page -> `High/Urgent`
+  - Regression page -> predicted resolution hours
+  - Satisfaction page -> risk band (`Low/Mid/High`)
+
+#### **Metrics + Limitations Block**
+- Targets: Priority >=0.80 acc, Regression R2 >=0.70, Satisfaction >=0.75 acc
+- Strength: end-to-end multi-task ML pipeline with DB + UI integration
+- Limitation: labels are engineered (not human-annotated ground truth), so near-perfect metrics should be interpreted cautiously
 
 ---
 ### **Technology Stack**
