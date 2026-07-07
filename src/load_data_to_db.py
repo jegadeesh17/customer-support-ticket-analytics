@@ -11,7 +11,7 @@ from src.db_connector import get_engine
 from src.paths import get_data_path
 
 
-def load_data():
+def load_data() -> None:
     csv_path = get_data_path()
     print(f'Loading data from {csv_path}...')
     try:

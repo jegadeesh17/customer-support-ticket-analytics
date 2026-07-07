@@ -8,3 +8,8 @@ Customer Support Tickets Analytics Project.docx
 models/*.pkl
 data/*.xlsx
 /interview_questions.md
+
+# DVC and Model artifacts
+.dvc/
+*.pth
+*.joblib
