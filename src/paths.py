@@ -5,7 +5,14 @@ def get_project_root():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 def get_data_path(filename='customer_support_ticket.csv'):
-    return os.path.join(get_project_root(), 'data', filename)
+    data_dir = os.path.join(get_project_root(), 'data')
+    preferred = os.path.join(data_dir, filename)
+    if os.path.exists(preferred):
+        return preferred
+    sample = os.path.join(data_dir, 'customer_support_ticket_sample.csv')
+    if os.path.exists(sample):
+        return sample
+    return preferred
 
 def get_models_dir():
     return os.path.join(get_project_root(), 'models')
