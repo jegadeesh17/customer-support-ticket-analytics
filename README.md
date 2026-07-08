@@ -1,20 +1,5 @@
 # Customer Support Tickets Analytics — Support Ops Intelligence
 ---
-### **3-Command Quickstart**
-```powershell
-pip install -r requirements.txt
-python src/train_models.py
-streamlit run app/app.py
-```
-
-**API:**
-```powershell
-uvicorn api.main:app --port 8002
-```
-
-**Evaluation report:** `reports/evaluation.md` (generated after training)
-
----
 ### **Project Overview**
 Machine learning platform for customer support ticket analysis. The project covers three tasks aligned with the course requirements:
 
@@ -23,6 +8,9 @@ Machine learning platform for customer support ticket analysis. The project cove
 3. **Customer Satisfaction** — Classify satisfaction into Low / Mid / High bands from ticket and service attributes.
 
 Data is stored in PostgreSQL; Jupyter notebooks in `notebooks/` follow the standard 10-step ML process; production training and inference live in `src/`.
+
+**Repository:** [github.com/jegadeesh17/customer-support-ticket-analytics](https://github.com/jegadeesh17/customer-support-ticket-analytics)  
+**Full specification:** [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md)
 
 ---
 ### **Key Features**
@@ -96,15 +84,11 @@ Interpretation guidance:
 ### **Interactive Application Deployment**
 ```bash
 streamlit run app/app.py
+uvicorn api.main:app --port 8002
 ```
 Use **Load sample ticket** on each page to populate the form from the dataset, then submit to get predictions.
 
-#### **3-Command Quickstart**
-```bash
-pip install -r requirements.txt
-python src/load_data_to_db.py && python src/train_models.py
-streamlit run app/app.py
-```
+**Evaluation report:** `reports/evaluation.md` (generated after training)
 
 #### **Sample Input / Output**
 - Input ticket: "Payment failed twice after renewal, account locked, need urgent access."
