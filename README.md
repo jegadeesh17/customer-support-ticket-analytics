@@ -24,6 +24,8 @@ Data is stored in PostgreSQL; Jupyter notebooks in `notebooks/` follow the stand
 ---
 ### **Dataset**
 - **Source:** `data/customer_support_ticket.csv` (~200,000 rows, 30 columns)
+- **In repo:** `data/customer_support_ticket_sample.csv` for clone-friendly demos
+- **Full data:** Place `customer_support_ticket.csv` in `data/` for training — see [data/DATA_SETUP.md](data/DATA_SETUP.md)
 - **Key fields:** product, category, issue_description, priority, channel, region, subscription_type, resolution_time_hours, customer_satisfaction_score, SLA flags, and customer metadata
 
 ---
