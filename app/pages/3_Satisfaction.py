@@ -60,7 +60,6 @@ if submit_button:
     else:
         with st.spinner('Predicting...'):
             try:
-                mode = st.session_state.get('inference_mode', 'Local Model')
                 start_time = time.time()
                 
                 payload = {
@@ -72,21 +71,15 @@ if submit_button:
                     'first_response_time_hours': first_response,
                 }
                 
-                if mode == 'Local Model':
-                    prediction = predict_satisfaction(payload)
-                else:
-                    api_url = st.session_state.get('api_url', 'http://localhost:8080')
-                    response = requests.post(f"{api_url}/predict_satisfaction", json=payload)
-                    response.raise_for_status()
-                    prediction = response.json().get('satisfaction', 'Unknown')
+                prediction = predict_satisfaction(payload)
                 
                 latency = time.time() - start_time
                 
                 if prediction == 'High':
-                    st.success(f'**Predicted Satisfaction:** {prediction} — Strong experience expected (Mode: {mode}, Latency: {latency:.2f}s)')
+                    st.success(f'**Predicted Satisfaction:** {prediction} — Strong experience expected (Latency: {latency:.2f}s)')
                 elif prediction == 'Mid':
-                    st.warning(f'**Predicted Satisfaction:** {prediction} — Monitor follow-up (Mode: {mode}, Latency: {latency:.2f}s)')
+                    st.warning(f'**Predicted Satisfaction:** {prediction} — Monitor follow-up (Latency: {latency:.2f}s)')
                 else:
-                    st.error(f'**Predicted Satisfaction:** {prediction} — At-risk customer (Mode: {mode}, Latency: {latency:.2f}s)')
+                    st.error(f'**Predicted Satisfaction:** {prediction} — At-risk customer (Latency: {latency:.2f}s)')
             except Exception as exc:
                 st.error(f'Error during prediction: {exc}')

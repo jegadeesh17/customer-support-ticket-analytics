@@ -50,7 +50,6 @@ if submit_button:
     else:
         with st.spinner('Estimating...'):
             try:
-                mode = st.session_state.get('inference_mode', 'Local Model')
                 start_time = time.time()
                 
                 payload = {
@@ -61,15 +60,9 @@ if submit_button:
                     'issue_complexity_score': issue_complexity,
                 }
                 
-                if mode == 'Local Model':
-                    hours = predict_regression(payload)
-                else:
-                    api_url = st.session_state.get('api_url', 'http://localhost:8080')
-                    response = requests.post(f"{api_url}/predict_resolution_hours", json=payload)
-                    response.raise_for_status()
-                    hours = response.json().get('resolution_time_hours', 0.0)
+                hours = predict_regression(payload)
                 
                 latency = time.time() - start_time
-                st.success(f'**Estimated Resolution Time:** {hours:.2f} hours (Mode: {mode}, Latency: {latency:.2f}s)')
+                st.success(f'**Estimated Resolution Time:** {hours:.2f} hours (Latency: {latency:.2f}s)')
             except Exception as exc:
                 st.error(f'Error during prediction: {exc}')

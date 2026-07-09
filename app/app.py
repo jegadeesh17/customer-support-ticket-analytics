@@ -90,36 +90,6 @@ def main():
             
     st.markdown("<br>", unsafe_allow_html=True)
     
-    st.subheader("⚙️ Deployment Mode")
-    st.markdown("Switch between local model inference and the deployed Cloud API to compare response times.")
-    
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        mode = st.radio(
-            "Inference Mode", 
-            ["Local Model", "Cloud API"], 
-            index=0 if st.session_state.get('inference_mode', 'Local Model') == 'Local Model' else 1
-        )
-        st.session_state.inference_mode = mode
-    
-    with col2:
-        if mode == "Cloud API":
-            api_url = st.text_input(
-                "Cloud API URL", 
-                value=st.session_state.get('api_url', 'https://support-ops-api-242711953247.asia-south1.run.app')
-            )
-            st.session_state.api_url = api_url.rstrip('/')
-            
-            if st.button("Test Connection"):
-                try:
-                    res = requests.get(f"{st.session_state.api_url}/health", timeout=5)
-                    if res.status_code == 200:
-                        st.success("✅ Connected to Cloud API successfully!")
-                    else:
-                        st.error(f"❌ API returned status code {res.status_code}")
-                except Exception as e:
-                    st.error(f"❌ Connection failed: {e}")
-
     st.info("💡 **Navigation:** Use the menu at the top of the page to access specific analytical modules.")
 
 
