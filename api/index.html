@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Support Ops Intelligence AI - Instantly analyze customer support tickets for priority, resolution time, and satisfaction.">
+    <title>Support Ops Intelligence | AI Predictor</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.05);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent-1: #8b5cf6;
+            --accent-2: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --glow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 800px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        h1, h2 {
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h1 { font-size: 2.2rem; line-height: 1.2; }
+        h2 { font-size: 1.5rem; }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        /* Select styling hack for dark mode */
+        select option {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        /* Button */
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--accent-1));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            box-shadow: var(--glow);
+        }
+
+        button:hover::after {
+            opacity: 1;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Results Panel */
+        .results-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .result-card {
+            background: var(--glass-highlight);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        }
+
+        .result-card.active {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.2rem;
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Value Colors */
+        .val-Urgent { color: var(--danger); }
+        .val-High { color: var(--warning); }
+        .val-Medium { color: var(--primary); }
+        .val-Low { color: var(--success); }
+
+        .error-message {
+            color: var(--danger);
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+            display: none;
+        }
+        
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Input Form -->
+        <main class="glass-panel">
+            <header>
+                <h1>Support Ops AI</h1>
+                <p class="subtitle">Predict priority, resolution time, and satisfaction instantly.</p>
+            </header>
+
+            <form id="predictForm">
+                <div class="form-group">
+                    <label for="issue_description">Issue Description</label>
+                    <textarea id="issue_description" name="issue_description" placeholder="Describe the customer's issue in detail..." required minlength="5"></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="product">Product</label>
+                        <select id="product" name="product">
+                            <option value="Web Portal">Web Portal</option>
+                            <option value="Mobile App">Mobile App</option>
+                            <option value="API">API</option>
+                            <option value="Billing System">Billing System</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category">
+                            <option value="Login Issue">Login Issue</option>
+                            <option value="Bug Report">Bug Report</option>
+                            <option value="Feature Request">Feature Request</option>
+                            <option value="Billing Question">Billing Question</option>
+                            <option value="How-to">How-to</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="channel">Channel</label>
+                        <select id="channel" name="channel">
+                            <option value="Email">Email</option>
+                            <option value="Live Chat">Live Chat</option>
+                            <option value="Phone">Phone</option>
+                            <option value="Social Media">Social Media</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subscription_type">Subscription</label>
+                        <select id="subscription_type" name="subscription_type">
+                            <option value="Free">Free</option>
+                            <option value="Basic">Basic</option>
+                            <option value="Premium">Premium</option>
+                            <option value="Enterprise">Enterprise</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn">
+                    <span>Analyze Ticket</span>
+                    <div class="spinner" id="spinner"></div>
+                </button>
+                <div id="errorMessage" class="error-message">An error occurred during prediction.</div>
+            </form>
+        </main>
+
+        <!-- Results Display -->
+        <aside class="glass-panel results-panel">
+            <h2>AI Analysis Results</h2>
+            <p class="subtitle" style="margin-bottom: 1rem;">Awaiting input...</p>
+
+            <div class="result-card" id="card-priority">
+                <div>
+                    <div class="result-label">Predicted Priority</div>
+                    <div class="result-value" id="res-priority">--</div>
+                </div>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-1); opacity: 0.7;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+            </div>
+
+            <div class="result-card" id="card-resolution">
+                <div>
+                    <div class="result-label">Est. Resolution Time</div>
+                    <div class="result-value" id="res-resolution">--</div>
+                </div>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); opacity: 0.7;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+
+            <div class="result-card" id="card-satisfaction">
+                <div>
+                    <div class="result-label">Predicted Satisfaction</div>
+                    <div class="result-value" id="res-satisfaction">--</div>
+                </div>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success); opacity: 0.7;"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        document.getElementById('predictForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('spinner');
+            const errorMsg = document.getElementById('errorMessage');
+            const subtitle = document.querySelector('.results-panel .subtitle');
+            
+            // Reset UI
+            errorMsg.style.display = 'none';
+            btn.disabled = true;
+            spinner.style.display = 'inline-block';
+            subtitle.textContent = "Analyzing ticket semantics...";
+            
+            // Collect data
+            const payload = {
+                issue_description: document.getElementById('issue_description').value,
+                product: document.getElementById('product').value,
+                category: document.getElementById('category').value,
+                channel: document.getElementById('channel').value,
+                subscription_type: document.getElementById('subscription_type').value,
+                customer_age: 35,
+                customer_gender: "Male",
+                customer_tenure_months: 24,
+                previous_tickets: 3,
+                issue_complexity_score: 5
+            };
+
+            const baseUrl = window.location.origin; // Dynamically uses current host
+            
+            try {
+                // Fire all three endpoints concurrently
+                const [pRes, rRes, sRes] = await Promise.all([
+                    fetch(`${baseUrl}/predict_priority`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }),
+                    fetch(`${baseUrl}/predict_resolution_hours`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }),
+                    fetch(`${baseUrl}/predict_satisfaction`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) })
+                ]);
+
+                if (!pRes.ok || !rRes.ok || !sRes.ok) {
+                    throw new Error("One or more predictions failed.");
+                }
+
+                const priorityData = await pRes.json();
+                const resolutionData = await rRes.json();
+                const satisfactionData = await sRes.json();
+
+                // Update UI smoothly
+                updateCard('priority', priorityData.predicted_priority, `val-${priorityData.predicted_priority}`);
+                updateCard('resolution', `${resolutionData.predicted_resolution_hours.toFixed(1)} hrs`, '');
+                updateCard('satisfaction', satisfactionData.predicted_satisfaction_band, '');
+
+                subtitle.textContent = "Analysis complete.";
+                
+            } catch (err) {
+                console.error(err);
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = "Error: Failed to connect to prediction engine.";
+                subtitle.textContent = "Analysis failed.";
+            } finally {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+
+        function updateCard(id, text, className) {
+            const card = document.getElementById(`card-${id}`);
+            const valEl = document.getElementById(`res-${id}`);
+            
+            card.classList.remove('active');
+            
+            setTimeout(() => {
+                valEl.textContent = text;
+                valEl.className = 'result-value ' + className;
+                card.classList.add('active', 'pulse');
+                
+                setTimeout(() => card.classList.remove('pulse'), 2000);
+            }, 150);
+        }
+    </script>
+</body>
+</html>

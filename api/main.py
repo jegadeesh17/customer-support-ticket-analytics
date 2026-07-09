@@ -61,6 +61,17 @@ def health() -> dict:
     }
 
 
+from fastapi.responses import FileResponse
+
+@app.get("/app", response_class=FileResponse, include_in_schema=False)
+@app.get("/app/", response_class=FileResponse, include_in_schema=False)
+def serve_app_ui():
+    html_path = os.path.join(os.path.dirname(__file__), "index.html")
+    if not os.path.exists(html_path):
+        raise HTTPException(status_code=404, detail="UI file not found")
+    return FileResponse(html_path)
+
+
 @app.post("/predict_priority", response_model=PriorityResponse)
 def predict_priority(ticket: TicketInput) -> PriorityResponse:
     payload = {**DEFAULT_INFERENCE_ROW, **ticket.model_dump()}
