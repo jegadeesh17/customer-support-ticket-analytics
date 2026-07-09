@@ -37,7 +37,7 @@ Customer Support Analytics is a **multi-task machine learning platform** for sup
 | 4 | Three separate trained models (priority, resolution, satisfaction) |
 | 5 | Multi-page Streamlit dashboard |
 | 6 | FastAPI `/predict_priority`, `/predict_resolution_hours` |
-| 7 | pytest API and inference tests |
+| 7 | pytest API endpoint tests |
 | 8 | EDA artifact generation |
 
 ### 2.2 Out of Scope
@@ -131,7 +131,7 @@ Service and model artifact status.
 ### `POST /predict_priority`
 
 **Input:** `TicketInput` — issue text + tabular metadata fields.  
-**Output:** Predicted priority class + confidence.
+**Output:** Predicted priority class.
 
 ### `POST /predict_resolution_hours`
 

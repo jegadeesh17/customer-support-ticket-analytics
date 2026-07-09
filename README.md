@@ -18,7 +18,7 @@ Data is stored in PostgreSQL; Jupyter notebooks in `notebooks/` follow the stand
 - TF-IDF NLP on `issue_description` combined with structured ticket features
 - Class imbalance handling via `class_weight='balanced'`
 - Multi-model comparison (Logistic Regression, Random Forest, Gradient Boosting, MLP)
-- EDA plots saved under `docs/eda/`
+- EDA generation supported via `python src/generate_eda.py`
 - Multi-page Streamlit dashboard with sample-ticket loading
 
 ---
