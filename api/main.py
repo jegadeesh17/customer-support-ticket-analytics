@@ -34,6 +34,8 @@ class TicketInput(BaseModel):
     customer_tenure_months: int = 24
     previous_tickets: int = 3
     issue_complexity_score: int = 5
+    priority: str = "Medium"
+    first_response_time_hours: float = 12.0
 
 
 class PriorityResponse(BaseModel):

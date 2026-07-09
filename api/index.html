@@ -52,16 +52,10 @@
 
         .container {
             width: 100%;
-            max-width: 1000px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-        }
-
-        @media (max-width: 800px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
         }
 
         /* Glassmorphism Panels */
@@ -73,7 +67,6 @@
             border-radius: 24px;
             padding: 2rem;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
             overflow: hidden;
         }
@@ -85,32 +78,82 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
         }
 
-        .glass-panel:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
-        }
-
-        h1, h2 {
+        h1 {
+            font-size: 2.2rem;
             font-weight: 600;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.5rem;
             background: linear-gradient(to right, #fff, #94a3b8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-align: center;
         }
-
-        h1 { font-size: 2.2rem; line-height: 1.2; }
-        h2 { font-size: 1.5rem; }
 
         p.subtitle {
             color: var(--text-muted);
-            margin-bottom: 2rem;
             font-size: 1rem;
             font-weight: 300;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            padding: 0.4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.8rem;
+            text-align: center;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Form Controls */
         .form-group {
             margin-bottom: 1.2rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
         }
 
         label {
@@ -135,7 +178,7 @@
 
         textarea {
             resize: vertical;
-            min-height: 100px;
+            min-height: 80px;
         }
 
         input:focus, select:focus, textarea:focus {
@@ -144,14 +187,13 @@
             background: rgba(15, 23, 42, 0.8);
         }
 
-        /* Select styling hack for dark mode */
         select option {
             background-color: var(--bg-color);
             color: var(--text-main);
         }
 
-        /* Button */
-        button {
+        /* Submit Button */
+        button.submit-btn {
             width: 100%;
             background: linear-gradient(135deg, var(--primary), var(--accent-1));
             color: white;
@@ -167,71 +209,16 @@
             margin-top: 1rem;
         }
 
-        button::after {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        button:hover {
+        button.submit-btn:hover {
             transform: scale(1.02);
             box-shadow: var(--glow);
         }
 
-        button:hover::after {
-            opacity: 1;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        button:disabled {
+        button.submit-btn:disabled {
             opacity: 0.7;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
-        }
-
-        /* Results Panel */
-        .results-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .result-card {
-            background: var(--glass-highlight);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--glass-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-            opacity: 0.5;
-        }
-
-        .result-card.active {
-            opacity: 1;
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .result-label {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.2rem;
-        }
-
-        .result-value {
-            font-size: 1.8rem;
-            font-weight: 700;
         }
 
         .spinner {
@@ -251,208 +238,249 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Value Colors */
-        .val-Urgent { color: var(--danger); }
-        .val-High { color: var(--warning); }
-        .val-Medium { color: var(--primary); }
-        .val-Low { color: var(--success); }
-
-        .error-message {
-            color: var(--danger);
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            text-align: center;
+        /* Result Alert */
+        .result-alert {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
             display: none;
-        }
-        
-        .pulse {
-            animation: pulse-animation 2s infinite;
-        }
-
-        @keyframes pulse-animation {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            animation: pulse-border 2s infinite;
         }
 
+        .result-alert.success { background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); }
+        .result-alert.warning { background: rgba(245, 158, 11, 0.1); border-color: var(--warning); color: var(--warning); }
+        .result-alert.danger { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); }
+        .result-alert.info { background: rgba(59, 130, 246, 0.1); border-color: var(--primary); color: var(--primary); }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(255,255,255, 0.1); }
+            70% { box-shadow: 0 0 0 10px rgba(255,255,255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,255,255, 0); }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Input Form -->
         <main class="glass-panel">
             <header>
                 <h1>Support Ops AI</h1>
-                <p class="subtitle">Predict priority, resolution time, and satisfaction instantly.</p>
+                <p class="subtitle">Cloud API Interface</p>
             </header>
 
-            <form id="predictForm">
-                <div class="form-group">
-                    <label for="issue_description">Issue Description</label>
-                    <textarea id="issue_description" name="issue_description" placeholder="Describe the customer's issue in detail..." required minlength="5"></textarea>
-                </div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('priority')">Priority Routing</button>
+                <button class="tab-btn" onclick="showTab('sla')">SLA Prediction</button>
+                <button class="tab-btn" onclick="showTab('satisfaction')">Satisfaction Insights</button>
+            </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <!-- PRIORITY TAB -->
+            <div id="tab-priority" class="tab-content active">
+                <form id="form-priority" onsubmit="handlePredict(event, 'predict_priority')">
                     <div class="form-group">
-                        <label for="product">Product</label>
-                        <select id="product" name="product">
-                            <option value="Web Portal">Web Portal</option>
-                            <option value="Mobile App">Mobile App</option>
-                            <option value="API">API</option>
-                            <option value="Billing System">Billing System</option>
-                        </select>
+                        <label>Issue Description</label>
+                        <textarea name="issue_description" required minlength="5">Login page is not loading on my laptop.</textarea>
                     </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Product</label>
+                            <select name="product">
+                                <option value="Web Portal">Web Portal</option>
+                                <option value="Mobile App">Mobile App</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input type="text" name="category" value="Login Issue" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Channel</label>
+                            <select name="channel">
+                                <option value="Email">Email</option>
+                                <option value="Live Chat">Live Chat</option>
+                                <option value="Phone">Phone</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Subscription</label>
+                            <select name="subscription_type">
+                                <option value="Premium">Premium</option>
+                                <option value="Free">Free</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn" id="btn-priority">
+                        <span>Predict Priority</span><div class="spinner"></div>
+                    </button>
+                    <div class="result-alert" id="res-priority"></div>
+                </form>
+            </div>
 
+            <!-- SLA TAB -->
+            <div id="tab-sla" class="tab-content">
+                <form id="form-sla" onsubmit="handlePredict(event, 'predict_resolution_hours')">
                     <div class="form-group">
-                        <label for="category">Category</label>
-                        <select id="category" name="category">
-                            <option value="Login Issue">Login Issue</option>
-                            <option value="Bug Report">Bug Report</option>
-                            <option value="Feature Request">Feature Request</option>
-                            <option value="Billing Question">Billing Question</option>
-                            <option value="How-to">How-to</option>
-                        </select>
+                        <label>Issue Description</label>
+                        <textarea name="issue_description" required minlength="5">App crashes immediately after the latest update.</textarea>
                     </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input type="text" name="category" value="Bug Report" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select name="priority">
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>First Response (hrs)</label>
+                            <input type="number" name="first_response_time_hours" value="2.5" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Complexity Score (1-10)</label>
+                            <input type="number" name="issue_complexity_score" value="7" min="1" max="10" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn" id="btn-sla">
+                        <span>Estimate Resolution Time</span><div class="spinner"></div>
+                    </button>
+                    <div class="result-alert" id="res-sla"></div>
+                </form>
+            </div>
 
+            <!-- SATISFACTION TAB -->
+            <div id="tab-satisfaction" class="tab-content">
+                <form id="form-satisfaction" onsubmit="handlePredict(event, 'predict_satisfaction')">
                     <div class="form-group">
-                        <label for="channel">Channel</label>
-                        <select id="channel" name="channel">
-                            <option value="Email">Email</option>
-                            <option value="Live Chat">Live Chat</option>
-                            <option value="Phone">Phone</option>
-                            <option value="Social Media">Social Media</option>
-                        </select>
+                        <label>Issue Description</label>
+                        <textarea name="issue_description" required minlength="5">The support agent was helpful but it took too long to reply.</textarea>
                     </div>
-
-                    <div class="form-group">
-                        <label for="subscription_type">Subscription</label>
-                        <select id="subscription_type" name="subscription_type">
-                            <option value="Free">Free</option>
-                            <option value="Basic">Basic</option>
-                            <option value="Premium">Premium</option>
-                            <option value="Enterprise">Enterprise</option>
-                        </select>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input type="text" name="category" value="General Inquiry" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select name="priority">
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Channel</label>
+                            <select name="channel">
+                                <option value="Email">Email</option>
+                                <option value="Live Chat">Live Chat</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>First Response (hrs)</label>
+                            <input type="number" name="first_response_time_hours" value="24.0" step="0.1" required>
+                        </div>
                     </div>
-                </div>
+                    <button type="submit" class="submit-btn" id="btn-satisfaction">
+                        <span>Predict Satisfaction</span><div class="spinner"></div>
+                    </button>
+                    <div class="result-alert" id="res-satisfaction"></div>
+                </form>
+            </div>
 
-                <button type="submit" id="submitBtn">
-                    <span>Analyze Ticket</span>
-                    <div class="spinner" id="spinner"></div>
-                </button>
-                <div id="errorMessage" class="error-message">An error occurred during prediction.</div>
-            </form>
         </main>
-
-        <!-- Results Display -->
-        <aside class="glass-panel results-panel">
-            <h2>AI Analysis Results</h2>
-            <p class="subtitle" style="margin-bottom: 1rem;">Awaiting input...</p>
-
-            <div class="result-card" id="card-priority">
-                <div>
-                    <div class="result-label">Predicted Priority</div>
-                    <div class="result-value" id="res-priority">--</div>
-                </div>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-1); opacity: 0.7;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
-            </div>
-
-            <div class="result-card" id="card-resolution">
-                <div>
-                    <div class="result-label">Est. Resolution Time</div>
-                    <div class="result-value" id="res-resolution">--</div>
-                </div>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); opacity: 0.7;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            </div>
-
-            <div class="result-card" id="card-satisfaction">
-                <div>
-                    <div class="result-label">Predicted Satisfaction</div>
-                    <div class="result-value" id="res-satisfaction">--</div>
-                </div>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success); opacity: 0.7;"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-            </div>
-        </aside>
     </div>
 
     <script>
-        document.getElementById('predictForm').addEventListener('submit', async (e) => {
+        // Tab Switching Logic
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Form Submission Logic
+        async function handlePredict(e, endpoint) {
             e.preventDefault();
             
-            const btn = document.getElementById('submitBtn');
-            const spinner = document.getElementById('spinner');
-            const errorMsg = document.getElementById('errorMessage');
-            const subtitle = document.querySelector('.results-panel .subtitle');
+            const form = e.target;
+            const btn = form.querySelector('.submit-btn');
+            const spinner = form.querySelector('.spinner');
             
-            // Reset UI
-            errorMsg.style.display = 'none';
+            // Map endpoint to tab ID
+            const tabId = endpoint === 'predict_priority' ? 'priority' : 
+                          endpoint === 'predict_resolution_hours' ? 'sla' : 'satisfaction';
+            
+            const resultBox = document.getElementById(`res-${tabId}`);
+            
+            // Reset state
             btn.disabled = true;
             spinner.style.display = 'inline-block';
-            subtitle.textContent = "Analyzing ticket semantics...";
+            resultBox.style.display = 'none';
+            resultBox.className = 'result-alert';
             
-            // Collect data
-            const payload = {
-                issue_description: document.getElementById('issue_description').value,
-                product: document.getElementById('product').value,
-                category: document.getElementById('category').value,
-                channel: document.getElementById('channel').value,
-                subscription_type: document.getElementById('subscription_type').value,
-                customer_age: 35,
-                customer_gender: "Male",
-                customer_tenure_months: 24,
-                previous_tickets: 3,
-                issue_complexity_score: 5
-            };
+            // Build JSON payload
+            const formData = new FormData(form);
+            const payload = Object.fromEntries(formData.entries());
+            
+            // Convert numbers
+            if (payload.first_response_time_hours) payload.first_response_time_hours = parseFloat(payload.first_response_time_hours);
+            if (payload.issue_complexity_score) payload.issue_complexity_score = parseInt(payload.issue_complexity_score);
 
-            const baseUrl = window.location.origin; // Dynamically uses current host
+            const baseUrl = window.location.origin;
             
             try {
-                // Fire all three endpoints concurrently
-                const [pRes, rRes, sRes] = await Promise.all([
-                    fetch(`${baseUrl}/predict_priority`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }),
-                    fetch(`${baseUrl}/predict_resolution_hours`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }),
-                    fetch(`${baseUrl}/predict_satisfaction`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) })
-                ]);
+                const response = await fetch(`${baseUrl}/${endpoint}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error("API request failed.");
+                
+                const data = await response.json();
+                resultBox.style.display = 'block';
 
-                if (!pRes.ok || !rRes.ok || !sRes.ok) {
-                    throw new Error("One or more predictions failed.");
+                if (endpoint === 'predict_priority') {
+                    const p = data.predicted_priority;
+                    resultBox.textContent = `Predicted Priority: ${p}`;
+                    if(p === 'Urgent') resultBox.classList.add('danger');
+                    else if(p === 'High') resultBox.classList.add('warning');
+                    else if(p === 'Medium') resultBox.classList.add('info');
+                    else resultBox.classList.add('success');
+                } 
+                else if (endpoint === 'predict_resolution_hours') {
+                    const h = data.predicted_resolution_hours.toFixed(1);
+                    resultBox.textContent = `Est. Resolution Time: ${h} hours`;
+                    resultBox.classList.add('info');
+                } 
+                else {
+                    const s = data.predicted_satisfaction_band;
+                    resultBox.textContent = `Predicted Satisfaction: ${s}`;
+                    if(s === 'High') resultBox.classList.add('success');
+                    else if(s === 'Mid') resultBox.classList.add('warning');
+                    else resultBox.classList.add('danger');
                 }
 
-                const priorityData = await pRes.json();
-                const resolutionData = await rRes.json();
-                const satisfactionData = await sRes.json();
-
-                // Update UI smoothly
-                updateCard('priority', priorityData.predicted_priority, `val-${priorityData.predicted_priority}`);
-                updateCard('resolution', `${resolutionData.predicted_resolution_hours.toFixed(1)} hrs`, '');
-                updateCard('satisfaction', satisfactionData.predicted_satisfaction_band, '');
-
-                subtitle.textContent = "Analysis complete.";
-                
             } catch (err) {
                 console.error(err);
-                errorMsg.style.display = 'block';
-                errorMsg.textContent = "Error: Failed to connect to prediction engine.";
-                subtitle.textContent = "Analysis failed.";
+                resultBox.style.display = 'block';
+                resultBox.className = 'result-alert danger';
+                resultBox.textContent = "Error communicating with API.";
             } finally {
                 btn.disabled = false;
                 spinner.style.display = 'none';
             }
-        });
-
-        function updateCard(id, text, className) {
-            const card = document.getElementById(`card-${id}`);
-            const valEl = document.getElementById(`res-${id}`);
-            
-            card.classList.remove('active');
-            
-            setTimeout(() => {
-                valEl.textContent = text;
-                valEl.className = 'result-value ' + className;
-                card.classList.add('active', 'pulse');
-                
-                setTimeout(() => card.classList.remove('pulse'), 2000);
-            }, 150);
         }
     </script>
 </body>
