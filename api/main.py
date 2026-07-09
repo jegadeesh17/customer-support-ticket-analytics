@@ -68,6 +68,8 @@ def predict_priority(ticket: TicketInput) -> PriorityResponse:
         priority = predict_classification(payload)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=repr(exc)) from exc
     return PriorityResponse(predicted_priority=str(priority))
 
 
@@ -78,6 +80,8 @@ def predict_resolution_hours(ticket: TicketInput) -> ResolutionResponse:
         hours = predict_regression(payload)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=repr(exc)) from exc
     return ResolutionResponse(predicted_resolution_hours=float(hours))
 
 
@@ -88,4 +92,6 @@ def predict_satisfaction_band(ticket: TicketInput) -> SatisfactionResponse:
         band = predict_satisfaction(payload)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=repr(exc)) from exc
     return SatisfactionResponse(predicted_satisfaction_band=str(band))
