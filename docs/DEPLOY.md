@@ -22,9 +22,9 @@ Zero-cost stack:
 
 ```bash
 pip install huggingface_hub
-huggingface-cli login
+hf auth login
 
-python scripts/upload_models_to_hf.py --repo-id YOUR_USERNAME/support-ops-models
+python scripts/upload_models_to_hf.py --repo-id jegadeesh17/support-ops-models
 ```
 
 This uploads three `.pkl` bundles (~280 MB total). Use a **public** repo.
@@ -51,7 +51,7 @@ For Streamlit Cloud, you can skip the DB and use the bundled sample CSV — the 
 3. Add secrets:
 
 ```toml
-HF_MODEL_REPO = "YOUR_USERNAME/support-ops-models"
+HF_MODEL_REPO = "jegadeesh17/support-ops-models"
 
 # Optional — use Neon for live DB; omit to use sample CSV
 DATABASE_URL = "postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require"
@@ -76,7 +76,7 @@ Create the `github-deployer` service account and download `gcp-key.json` (same r
 |--------|-------|
 | `GCP_PROJECT_ID` | Your GCP project ID |
 | `GCP_SA_KEY` | Contents of `gcp-key.json` |
-| `HF_MODEL_REPO` | `YOUR_USERNAME/support-ops-models` |
+| `HF_MODEL_REPO` | `jegadeesh17/support-ops-models` |
 
 ## Step 6 — Deploy API to Cloud Run
 
@@ -103,7 +103,7 @@ curl -X POST https://YOUR-SERVICE-xxx.run.app/predict_satisfaction \
 
 ```bash
 docker build -t support-ops-api .
-docker run -p 8080:8080 -e HF_MODEL_REPO=YOUR_USERNAME/support-ops-models support-ops-api
+docker run -p 8080:8080 -e HF_MODEL_REPO=jegadeesh17/support-ops-models support-ops-api
 ```
 
 ## Interview talking points

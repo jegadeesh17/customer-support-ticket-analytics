@@ -1,5 +1,7 @@
 import os
 import sys
+import time
+import requests
 
 import streamlit as st
 
@@ -59,14 +61,27 @@ if submit_button:
     else:
         with st.spinner('Predicting...'):
             try:
-                prediction = predict_classification({
+                mode = st.session_state.get('inference_mode', 'Local Model')
+                start_time = time.time()
+                
+                payload = {
                     'product': product,
                     'category': category,
                     'issue_description': issue_description,
                     'subscription_type': subscription_type,
                     'channel': channel,
                     'priority': priority_hint,
-                })
-                st.success(f'**Predicted Priority:** {prediction}')
+                }
+                
+                if mode == 'Local Model':
+                    prediction = predict_classification(payload)
+                else:
+                    api_url = st.session_state.get('api_url', 'http://localhost:8080')
+                    response = requests.post(f"{api_url}/predict_priority", json=payload)
+                    response.raise_for_status()
+                    prediction = response.json().get('priority', 'Unknown')
+                
+                latency = time.time() - start_time
+                st.success(f'**Predicted Priority:** {prediction} (Mode: {mode}, Latency: {latency:.2f}s)')
             except Exception as exc:
                 st.error(f'Error during prediction: {exc}')

@@ -1,5 +1,7 @@
 import os
 import sys
+import time
+import requests
 
 import streamlit as st
 
@@ -58,19 +60,33 @@ if submit_button:
     else:
         with st.spinner('Predicting...'):
             try:
-                prediction = predict_satisfaction({
+                mode = st.session_state.get('inference_mode', 'Local Model')
+                start_time = time.time()
+                
+                payload = {
                     'issue_description': issue_description,
                     'category': category,
                     'priority': priority,
                     'channel': channel,
                     'subscription_type': subscription_type,
                     'first_response_time_hours': first_response,
-                })
-                if prediction == 'High':
-                    st.success(f'**Predicted Satisfaction:** {prediction} — Strong experience expected')
-                elif prediction == 'Mid':
-                    st.warning(f'**Predicted Satisfaction:** {prediction} — Monitor follow-up')
+                }
+                
+                if mode == 'Local Model':
+                    prediction = predict_satisfaction(payload)
                 else:
-                    st.error(f'**Predicted Satisfaction:** {prediction} — At-risk customer')
+                    api_url = st.session_state.get('api_url', 'http://localhost:8080')
+                    response = requests.post(f"{api_url}/predict_satisfaction", json=payload)
+                    response.raise_for_status()
+                    prediction = response.json().get('satisfaction', 'Unknown')
+                
+                latency = time.time() - start_time
+                
+                if prediction == 'High':
+                    st.success(f'**Predicted Satisfaction:** {prediction} — Strong experience expected (Mode: {mode}, Latency: {latency:.2f}s)')
+                elif prediction == 'Mid':
+                    st.warning(f'**Predicted Satisfaction:** {prediction} — Monitor follow-up (Mode: {mode}, Latency: {latency:.2f}s)')
+                else:
+                    st.error(f'**Predicted Satisfaction:** {prediction} — At-risk customer (Mode: {mode}, Latency: {latency:.2f}s)')
             except Exception as exc:
                 st.error(f'Error during prediction: {exc}')

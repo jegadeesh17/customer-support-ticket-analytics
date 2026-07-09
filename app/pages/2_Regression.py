@@ -1,5 +1,7 @@
 import os
 import sys
+import time
+import requests
 
 import streamlit as st
 
@@ -48,13 +50,26 @@ if submit_button:
     else:
         with st.spinner('Estimating...'):
             try:
-                hours = predict_regression({
+                mode = st.session_state.get('inference_mode', 'Local Model')
+                start_time = time.time()
+                
+                payload = {
                     'category': category,
                     'issue_description': issue_description,
                     'priority': priority,
                     'first_response_time_hours': first_response,
                     'issue_complexity_score': issue_complexity,
-                })
-                st.success(f'**Estimated Resolution Time:** {hours:.2f} hours')
+                }
+                
+                if mode == 'Local Model':
+                    hours = predict_regression(payload)
+                else:
+                    api_url = st.session_state.get('api_url', 'http://localhost:8080')
+                    response = requests.post(f"{api_url}/predict_resolution_hours", json=payload)
+                    response.raise_for_status()
+                    hours = response.json().get('resolution_time_hours', 0.0)
+                
+                latency = time.time() - start_time
+                st.success(f'**Estimated Resolution Time:** {hours:.2f} hours (Mode: {mode}, Latency: {latency:.2f}s)')
             except Exception as exc:
                 st.error(f'Error during prediction: {exc}')

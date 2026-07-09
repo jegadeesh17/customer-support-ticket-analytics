@@ -1,0 +1,66 @@
+
+[     UTC     ] Logs for customersupportanalytics.streamlit.app/
+────────────────────────────────────────────────────────────────────────────────────────
+[08:20:09] 🚀 Starting up repository: 'customer-support-ticket-analytics', branch: 'main', main module: 'app/app.py'
+[08:20:09] 🐙 Cloning repository...
+[08:20:13] 🐙 Cloning into '/mount/src/customer-support-ticket-analytics'...
+
+[08:20:13] 🐙 Cloned repository!
+[08:20:13] 🐙 Pulling code changes from Github...
+[08:20:14] 📦 Processing dependencies...
+
+──────────────────────────────────────── uv ───────────────────────────────────────────
+
+Using uv pip install.
+Using Python 3.14.6 environment at /home/adminuser/venv
+  × No solution found when resolving dependencies:
+  ╰─▶ Because there is no version of scikit-learn==1.4.1 and you require
+      scikit-learn==1.4.1, we can conclude that your requirements are
+      unsatisfiable.
+Checking if Streamlit is installed
+Installing rich for an improved exception logging
+Using uv pip install.
+Using Python 3.14.6 environment at /home/adminuser/venv
+Resolved 4 packages in 93ms
+Prepared 4 packages in 107ms
+Installed 4 packages in 20ms
+ + [2026-07-09 08:20:14.955724] markdown-it-py==4.2.0
+ + mdurl==0.1.2
+ + pygments==2.20.0
+ + rich==15.0.0
+
+────────────────────────────────────────────────────────────────────────────────────────
+
+
+──────────────────────────────────────── pip ───────────────────────────────────────────
+
+Using standard pip install.
+Collecting streamlit==1.32.0 (from -r /mount/src/customer-support-ticket-analytics/requirements.txt (line 1))
+  Downloading streamlit-1.32.0-py2.py3-none-any.whl.metadata (8.5 kB)
+Collecting pandas==2.2.1 (from -r /mount/src/customer-support-ticket-analytics/requirements.txt (line 2))
+  Downloading pandas-2.2.1.tar.gz (4.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 73.6 MB/s eta 0:00:00[2026-07-09 08:20:16.415913] 
+  Installing build dependencies: started
+  Installing build dependencies: still running...
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+[09:05:51] ❗️ installer returned a non-zero exit code
+[09:05:51] ❗️ Error during processing dependencies! Please fix the error and push an update, or try restarting the app.
+[14:53:01] 🐙 Pulling code changes from Github...
+[14:53:03] 📦 Processing dependencies...
+[15:38:42] ❗️ installer returned a non-zero exit code
+[15:38:42] 🐙 Pulling code changes from Github...
+[15:38:43] 📦 Processing dependencies...
+[16:24:25] ❗️ installer returned a non-zero exit code
+[16:24:25] 🐙 Pulling code changes from Github...
+[16:24:26] 📦 Processing dependencies...
+[17:10:03] ❗️ installer returned a non-zero exit code
+[17:10:03] 🐙 Pulling code changes from Github...
+[17:10:04] 📦 Processing dependencies...
+[17:55:39] ❗️ installer returned a non-zero exit code
+[17:55:39] 🐙 Pulling code changes from Github...
+[17:55:40] 📦 Processing dependencies...
