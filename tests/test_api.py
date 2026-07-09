@@ -16,10 +16,11 @@ if ROOT not in sys.path:
 def client():
     with patch("api.main.predict_classification", return_value="High"):
         with patch("api.main.predict_regression", return_value=18.5):
-            with patch("api.main.os.path.exists", return_value=True):
-                from api.main import app
+            with patch("api.main.predict_satisfaction", return_value="Mid"):
+                with patch("api.main.os.path.exists", return_value=True):
+                    from api.main import app
 
-                yield TestClient(app)
+                    yield TestClient(app)
 
 
 class TestHealth:
@@ -52,3 +53,13 @@ class TestPredictResolution:
         assert response.status_code == 200
         body = response.json()
         assert body["predicted_resolution_hours"] == 18.5
+
+
+class TestPredictSatisfaction:
+    def test_predict_satisfaction_schema(self, client):
+        response = client.post(
+            "/predict_satisfaction",
+            json={"issue_description": "Support response was slow but issue got fixed."},
+        )
+        assert response.status_code == 200
+        assert response.json()["predicted_satisfaction_band"] == "Mid"

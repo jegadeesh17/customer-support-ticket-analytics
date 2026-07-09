@@ -1,7 +1,9 @@
-[client]
-showSidebarNavigation = false
 [theme]
-primaryColor="#D97706"
-backgroundColor="#FFFAF5"
-secondaryBackgroundColor="#FEF0E6"
-textColor="#4A2B12"
+primaryColor = "#C45C26"
+backgroundColor = "#FFFAF5"
+secondaryBackgroundColor = "#F5E6D3"
+textColor = "#3D2914"
+font = "sans serif"
+
+[server]
+headless = true

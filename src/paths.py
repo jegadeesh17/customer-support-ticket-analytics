@@ -15,7 +15,10 @@ def get_data_path(filename='customer_support_ticket.csv'):
     return preferred
 
 def get_models_dir():
-    return os.path.join(get_project_root(), 'models')
+    models_dir = os.path.join(get_project_root(), 'models')
+    from src.model_assets import ensure_models
+
+    return ensure_models(models_dir)
 
 def get_eda_dir():
     eda_dir = os.path.join(get_project_root(), 'docs', 'eda')

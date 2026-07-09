@@ -155,7 +155,22 @@ A support agent enters a ticket description and channel. The **Priority** page p
 - BERT / LSTM text models for priority classification
 - SHAP explanations in the Streamlit UI
 - Batch prediction and export
-- Streamlit Cloud deployment
+
+---
+
+### **Cloud Deployment (Free Tier)**
+
+Deploy the dashboard, API, and database at zero cost using Streamlit Cloud, Hugging Face Hub, Neon Postgres, and GCP Cloud Run.
+
+**Full guide:** [docs/DEPLOY.md](docs/DEPLOY.md)  
+**Master walkthrough (both projects):** [../DEPLOY_GUIDE.md](../DEPLOY_GUIDE.md)
+
+Quick summary:
+
+1. `python scripts/upload_models_to_hf.py --repo-id YOUR_USERNAME/support-ops-models`
+2. Neon Postgres → set `DATABASE_URL` (optional; sample CSV works without DB)
+3. Streamlit Cloud → `app/app.py` with `HF_MODEL_REPO` secret
+4. GitHub Actions → **Deploy API to Cloud Run**
 
 ---
 ### **Contributors**

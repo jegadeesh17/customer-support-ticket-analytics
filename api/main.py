@@ -13,7 +13,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from src.constants import DEFAULT_INFERENCE_ROW
-from src.inference import predict_classification, predict_regression
+from src.inference import predict_classification, predict_regression, predict_satisfaction
 
 app = FastAPI(
     title="Support Ops Intelligence API",
@@ -44,6 +44,10 @@ class ResolutionResponse(BaseModel):
     predicted_resolution_hours: float
 
 
+class SatisfactionResponse(BaseModel):
+    predicted_satisfaction_band: str
+
+
 @app.get("/health")
 def health() -> dict:
     from src.paths import get_models_dir
@@ -53,6 +57,7 @@ def health() -> dict:
         "status": "ok",
         "classification_model": os.path.exists(os.path.join(models_dir, "classification_model.pkl")),
         "regression_model": os.path.exists(os.path.join(models_dir, "regression_model.pkl")),
+        "satisfaction_model": os.path.exists(os.path.join(models_dir, "satisfaction_model.pkl")),
     }
 
 
@@ -74,3 +79,13 @@ def predict_resolution_hours(ticket: TicketInput) -> ResolutionResponse:
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return ResolutionResponse(predicted_resolution_hours=float(hours))
+
+
+@app.post("/predict_satisfaction", response_model=SatisfactionResponse)
+def predict_satisfaction_band(ticket: TicketInput) -> SatisfactionResponse:
+    payload = {**DEFAULT_INFERENCE_ROW, **ticket.model_dump()}
+    try:
+        band = predict_satisfaction(payload)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return SatisfactionResponse(predicted_satisfaction_band=str(band))
