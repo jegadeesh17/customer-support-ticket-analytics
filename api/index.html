@@ -278,6 +278,10 @@
                 <button class="tab-btn" onclick="showTab('satisfaction')">Satisfaction Insights</button>
             </div>
 
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                <button type="button" style="padding: 0.5rem 1rem; border-radius: 8px; background: rgba(255,255,255,0.1); color: var(--text-main); border: 1px solid var(--glass-border); cursor: pointer;" onclick="loadSample()" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Load Sample Ticket</button>
+            </div>
+
             <!-- PRIORITY TAB -->
             <div id="tab-priority" class="tab-content active">
                 <form id="form-priority" onsubmit="handlePredict(event, 'predict_priority')">
@@ -291,6 +295,12 @@
                             <select name="product">
                                 <option value="Web Portal">Web Portal</option>
                                 <option value="Mobile App">Mobile App</option>
+                                <option value="Payment Gateway">Payment Gateway</option>
+                                <option value="E-commerce Store">E-commerce Store</option>
+                                <option value="API Service">API Service</option>
+                                <option value="CRM Platform">CRM Platform</option>
+                                <option value="Cloud Storage">Cloud Storage</option>
+                                <option value="Billing System">Billing System</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -301,15 +311,28 @@
                             <label>Channel</label>
                             <select name="channel">
                                 <option value="Email">Email</option>
-                                <option value="Live Chat">Live Chat</option>
+                                <option value="Chat">Chat</option>
                                 <option value="Phone">Phone</option>
+                                <option value="Social Media">Social Media</option>
+                                <option value="Web Form">Web Form</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Subscription</label>
                             <select name="subscription_type">
-                                <option value="Premium">Premium</option>
                                 <option value="Free">Free</option>
+                                <option value="Basic">Basic</option>
+                                <option value="Premium" selected>Premium</option>
+                                <option value="Enterprise">Enterprise</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Priority (optional hint)</label>
+                            <select name="priority">
+                                <option value="Urgent">Urgent</option>
+                                <option value="High">High</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="Low">Low</option>
                             </select>
                         </div>
                     </div>
@@ -335,9 +358,9 @@
                         <div class="form-group">
                             <label>Priority</label>
                             <select name="priority">
-                                <option value="High">High</option>
                                 <option value="Urgent">Urgent</option>
-                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Medium" selected>Medium</option>
                                 <option value="Low">Low</option>
                             </select>
                         </div>
@@ -372,8 +395,9 @@
                         <div class="form-group">
                             <label>Priority</label>
                             <select name="priority">
-                                <option value="Medium">Medium</option>
+                                <option value="Urgent">Urgent</option>
                                 <option value="High">High</option>
+                                <option value="Medium" selected>Medium</option>
                                 <option value="Low">Low</option>
                             </select>
                         </div>
@@ -381,7 +405,19 @@
                             <label>Channel</label>
                             <select name="channel">
                                 <option value="Email">Email</option>
-                                <option value="Live Chat">Live Chat</option>
+                                <option value="Chat">Chat</option>
+                                <option value="Phone">Phone</option>
+                                <option value="Social Media">Social Media</option>
+                                <option value="Web Form">Web Form</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Subscription</label>
+                            <select name="subscription_type">
+                                <option value="Free">Free</option>
+                                <option value="Basic">Basic</option>
+                                <option value="Premium" selected>Premium</option>
+                                <option value="Enterprise">Enterprise</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -400,6 +436,24 @@
     </div>
 
     <script>
+        function loadSample() {
+            const sample = {
+                issue_description: 'I am unable to access my account after entering the correct credentials.',
+                category: 'Login Issue',
+                product: 'Web Portal',
+                channel: 'Email',
+                subscription_type: 'Premium',
+                priority: 'Medium',
+                first_response_time_hours: 12.0,
+                issue_complexity_score: 5
+            };
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (sample[el.name] !== undefined) {
+                    el.value = sample[el.name];
+                }
+            });
+        }
+
         // Tab Switching Logic
         function showTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
