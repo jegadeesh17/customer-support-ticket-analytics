@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import requests
 
 import streamlit as st
 
@@ -9,23 +8,44 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from src.constants import PRIORITY_LEVELS
+from src.constants import (
+    CATEGORIES,
+    CHANNELS,
+    COMPLEXITY_RANGE,
+    DEFAULT_INFERENCE_ROW,
+    PREVIOUS_TICKETS_RANGE,
+    PRIORITY_LEVELS,
+    SUBSCRIPTIONS,
+    YES_NO,
+)
 from src.inference import load_sample_ticket, predict_satisfaction
 
-# Ensure app is in path so we can import nav
+# Ensure app is in path so we can import the shared chrome
 APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if APP_DIR not in sys.path:
     sys.path.insert(0, APP_DIR)
-from app import render_nav
+from app import apply_theme, page_header, render_footer, render_nav, result_card
 
-st.set_page_config(page_title='Satisfaction Insights', page_icon='😊', layout='wide', initial_sidebar_state='collapsed')
+st.set_page_config(page_title='Satisfaction · SupportLens', page_icon='🎯',
+                   layout='wide', initial_sidebar_state='collapsed')
+apply_theme()
+render_nav(active=3)
 
-CHANNELS = ['Email', 'Chat', 'Phone', 'Social Media', 'Web Form']
-SUBSCRIPTIONS = ['Free', 'Basic', 'Premium', 'Enterprise']
+page_header('Satisfaction Risk',
+            'Score an in-flight ticket for satisfaction risk while intervention is still possible.')
 
-st.title('Satisfaction Insights 😊')
-st.markdown('Predict **satisfaction level** (Low / Mid / High) from ticket characteristics.')
-render_nav()
+TONE_BY_BAND = {'High': 'good', 'Mid': 'warn', 'Low': 'bad'}
+NOTE_BY_BAND = {
+    'High': 'On track — no intervention needed.',
+    'Mid': 'Monitor follow-up and confirm resolution quality.',
+    'Low': 'At-risk customer — consider proactive outreach.',
+}
+
+
+def _index_of(options, value, fallback=0):
+    """Position of a sample value within an option list, or a fallback."""
+    return options.index(value) if value in options else fallback
+
 
 if 'sat_sample' not in st.session_state:
     st.session_state.sat_sample = load_sample_ticket()
@@ -36,32 +56,66 @@ if st.button('Load sample ticket'):
 sample = st.session_state.sat_sample
 
 with st.form('satisfaction_form'):
-    st.subheader('Ticket & Service Details')
-    issue_description = st.text_area('Issue Description', value=str(sample.get('issue_description', '')))
-    category = st.text_input('Category', value=str(sample.get('category', 'Login Issue')))
-    priority = st.selectbox(
-        'Priority', PRIORITY_LEVELS,
-        index=PRIORITY_LEVELS.index(sample['priority']) if sample.get('priority') in PRIORITY_LEVELS else 2,
+    st.markdown('##### Ticket')
+    issue_description = st.text_area(
+        'Issue description', value=str(sample.get('issue_description', '')), height=100,
     )
-    channel = st.selectbox(
-        'Channel', CHANNELS,
-        index=CHANNELS.index(sample['channel']) if sample.get('channel') in CHANNELS else 0,
-    )
-    subscription_type = st.selectbox(
-        'Subscription Type', SUBSCRIPTIONS,
-        index=SUBSCRIPTIONS.index(sample['subscription_type']) if sample.get('subscription_type') in SUBSCRIPTIONS else 2,
-    )
-    first_response = st.number_input('First Response Time (hours)', min_value=0.0, value=float(sample.get('first_response_time_hours', 12.0)))
-    submit_button = st.form_submit_button('Predict Satisfaction')
+
+    st.markdown('##### Service outcome so far')
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        sla_breached = st.selectbox(
+            'SLA breached', YES_NO, index=_index_of(YES_NO, sample.get('sla_breached')),
+            help='Largest single driver — ~29% of the model.',
+        )
+    with c2:
+        escalated = st.selectbox('Escalated', YES_NO, index=_index_of(YES_NO, sample.get('escalated')))
+    with c3:
+        first_response = st.number_input(
+            'First response time (hours)', min_value=0.0,
+            value=float(sample.get('first_response_time_hours', 12.0)),
+            help='~10% of the model.',
+        )
+
+    st.markdown('##### Ticket & customer')
+    c4, c5, c6 = st.columns(3)
+    with c4:
+        previous_tickets = st.number_input(
+            'Previous tickets from this customer',
+            min_value=PREVIOUS_TICKETS_RANGE[0], max_value=PREVIOUS_TICKETS_RANGE[1],
+            value=int(sample.get('previous_tickets', DEFAULT_INFERENCE_ROW['previous_tickets'])),
+            help='~12% of the model.',
+        )
+        category = st.selectbox(
+            'Category', CATEGORIES,
+            index=_index_of(CATEGORIES, sample.get('category'), CATEGORIES.index('Login Issue')),
+        )
+    with c5:
+        issue_complexity = st.slider(
+            'Issue complexity score', *COMPLEXITY_RANGE,
+            int(sample.get('issue_complexity_score', 5)),
+            help='~8% of the model.',
+        )
+        priority = st.selectbox(
+            'Priority', PRIORITY_LEVELS,
+            index=_index_of(PRIORITY_LEVELS, sample.get('priority'), PRIORITY_LEVELS.index('Medium')),
+        )
+    with c6:
+        channel = st.selectbox('Channel', CHANNELS, index=_index_of(CHANNELS, sample.get('channel')))
+        subscription_type = st.selectbox(
+            'Subscription type', SUBSCRIPTIONS,
+            index=_index_of(SUBSCRIPTIONS, sample.get('subscription_type'), SUBSCRIPTIONS.index('Premium')),
+        )
+
+    submit_button = st.form_submit_button('Predict satisfaction')
 
 if submit_button:
     if not issue_description.strip():
         st.warning('Please provide an issue description.')
     else:
-        with st.spinner('Predicting...'):
+        with st.spinner('Scoring...'):
             try:
                 start_time = time.time()
-                
                 payload = {
                     'issue_description': issue_description,
                     'category': category,
@@ -69,17 +123,25 @@ if submit_button:
                     'channel': channel,
                     'subscription_type': subscription_type,
                     'first_response_time_hours': first_response,
+                    'previous_tickets': previous_tickets,
+                    'issue_complexity_score': issue_complexity,
+                    'sla_breached': sla_breached,
+                    'escalated': escalated,
                 }
-                
-                prediction = predict_satisfaction(payload)
-                
+                prediction = str(predict_satisfaction(payload))
                 latency = time.time() - start_time
-                
-                if prediction == 'High':
-                    st.success(f'**Predicted Satisfaction:** {prediction} — Strong experience expected (Latency: {latency:.2f}s)')
-                elif prediction == 'Mid':
-                    st.warning(f'**Predicted Satisfaction:** {prediction} — Monitor follow-up (Latency: {latency:.2f}s)')
-                else:
-                    st.error(f'**Predicted Satisfaction:** {prediction} — At-risk customer (Latency: {latency:.2f}s)')
+
+                result_card('Predicted satisfaction', prediction,
+                            NOTE_BY_BAND.get(prediction, ''),
+                            TONE_BY_BAND.get(prediction, 'info'))
+                st.caption(f'Scored in {latency:.2f}s.')
             except Exception as exc:
-                st.error(f'Error during prediction: {exc}')
+                st.error('Could not score this ticket. The model may still be downloading — try again in a moment.')
+                with st.expander('Details'):
+                    st.code(repr(exc))
+
+st.caption(
+    'SLA breach, escalation and first-response time are outcomes rather than ticket-creation '
+    'inputs, so this reads as an in-flight risk check on an open ticket, not a pre-triage forecast.'
+)
+render_footer()

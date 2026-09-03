@@ -48,7 +48,12 @@ For Streamlit Cloud, you can skip the DB and use the bundled sample CSV — the 
 
 1. Go to [share.streamlit.io](https://share.streamlit.io)
 2. New app → this repo → main file: `app/app.py`
-3. Add secrets:
+3. **Advanced settings → Python version: 3.11** (or 3.12). This matters: Streamlit Cloud
+   otherwise picks its current default, and on 3.14 there are no wheels for the pinned
+   `pandas`/`numpy`/`scikit-learn`, so the build falls back to compiling from source and
+   times out after ~45 minutes. Streamlit Cloud does **not** read `.python-version` or
+   `runtime.txt` — this dropdown is the only place the version is set.
+4. Add secrets:
 
 ```toml
 HF_MODEL_REPO = "jegadeesh17/support-ops-models"
@@ -57,7 +62,9 @@ HF_MODEL_REPO = "jegadeesh17/support-ops-models"
 DATABASE_URL = "postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require"
 ```
 
-4. Deploy. First load downloads model bundles from Hugging Face.
+5. Deploy. First load downloads model bundles from Hugging Face (~285 MB), then caches
+   them in-process — `requirements.txt` is deliberately limited to the UI runtime set, so
+   keep training/notebook packages in `requirements-dev.txt` to protect the build.
 
 ## Step 4 — GCP setup for Cloud Run API
 

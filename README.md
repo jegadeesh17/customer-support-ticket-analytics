@@ -40,7 +40,8 @@ CustomerSupportAnalytics/
 ├── models/               # Saved .pkl model bundles
 ├── notebooks/            # 10-step Jupyter notebooks
 ├── src/                  # Training, EDA, DB, inference
-├── requirements.txt
+├── requirements.txt      # Streamlit runtime deps only
+├── requirements-dev.txt  # + training, notebooks, DB, tests
 ├── .env                  # Database credentials (not committed)
 └── README.md
 ```
@@ -120,8 +121,11 @@ cd customer-support-ticket-analytics
 
 ### **2. Install Dependencies**
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # training, notebooks, DB, tests
 ```
+
+`requirements.txt` holds only what the Streamlit app needs at runtime (it is what
+Streamlit Cloud installs); `requirements-dev.txt` includes it and adds the rest.
 
 ### **3. Configure Database**
 Create `.env` in the project root:

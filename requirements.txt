@@ -1,18 +1,10 @@
-streamlit>=1.36.0
+# Streamlit Cloud runtime only. Keep this list minimal — every extra package lengthens
+# the Cloud build and risks a source build when no wheel exists for the runner's Python.
+# Training/notebook/API tooling lives in requirements-dev.txt and requirements-api.txt.
+streamlit==1.40.2
 pandas==2.2.3
 numpy==2.2.3
+# Must match the version the .pkl bundles were fitted with, or unpickling warns/fails.
 scikit-learn==1.8.0
-sqlalchemy==2.0.27
-psycopg2-binary==2.9.9
-python-dotenv==1.0.1
-jupyter==1.0.0
-notebook==7.1.1
-matplotlib==3.8.3
-seaborn==0.13.2
-joblib==1.3.2
-dvc==3.42.0
-fastapi==0.115.6
-uvicorn==0.32.1
-pytest==8.3.4
-httpx==0.28.1
+joblib==1.5.3
 huggingface_hub>=0.23.0

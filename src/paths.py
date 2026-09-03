@@ -1,4 +1,5 @@
 import os
+from functools import lru_cache
 
 def get_project_root():
     """Return the CustomerSupportAnalytics project root directory."""
@@ -14,7 +15,9 @@ def get_data_path(filename='customer_support_ticket.csv'):
         return sample
     return preferred
 
+@lru_cache(maxsize=1)
 def get_models_dir():
+    """Resolve (and if needed download) the models directory once per process."""
     models_dir = os.path.join(get_project_root(), 'models')
     from src.model_assets import ensure_models
 
