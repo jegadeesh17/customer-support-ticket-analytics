@@ -3,539 +3,542 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Support Ops Intelligence AI - Instantly analyze customer support tickets for priority, resolution time, and satisfaction.">
-    <title>Support Ops Intelligence | AI Predictor</title>
-    
-    <!-- Modern Typography -->
+    <meta name="description" content="Support Ops Intelligence - predict ticket priority, resolution time and satisfaction risk.">
+    <title>Support Ops Intelligence</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
         :root {
             --bg-color: #0f172a;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            --text-dim: #64748b;
             --glass-bg: rgba(30, 41, 59, 0.7);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --glass-highlight: rgba(255, 255, 255, 0.05);
+            --field-bg: rgba(15, 23, 42, 0.6);
             --primary: #3b82f6;
             --primary-hover: #2563eb;
-            --accent-1: #8b5cf6;
-            --accent-2: #ec4899;
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --glow: 0 0 20px rgba(59, 130, 246, 0.5);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Outfit', sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-            background-image: 
+            padding: 2rem 1.25rem 3rem;
+            background-image:
                 radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
                 radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
             background-attachment: fixed;
         }
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
+        .container { width: 100%; max-width: 860px; margin: 0 auto; }
 
-        /* Glassmorphism Panels */
+        /* ---------- header ---------- */
+        .app-header {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+        }
+        .brand { display: flex; align-items: baseline; gap: .6rem; }
+        .brand h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.01em; }
+        .brand span { font-size: .82rem; color: var(--text-dim); font-weight: 400; }
+
+        .status {
+            display: inline-flex; align-items: center; gap: .5rem;
+            padding: .4rem .8rem; border-radius: 999px;
+            background: rgba(15, 23, 42, .6); border: 1px solid var(--glass-border);
+            font-size: .78rem; color: var(--text-muted);
+        }
+        .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); flex: none; }
+        .dot.online { background: var(--success); box-shadow: 0 0 8px rgba(16,185,129,.7); }
+        .dot.offline { background: var(--danger); }
+        .dot.pending { background: var(--warning); animation: pulse 1.4s ease-in-out infinite; }
+        @keyframes pulse { 0%,100% {opacity:1} 50% {opacity:.35} }
+
+        /* ---------- panel ---------- */
         .glass-panel {
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 2rem;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 1.75rem; box-shadow: 0 8px 32px rgba(0,0,0,.3);
         }
 
-        .glass-panel::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        }
-
-        h1 {
-            font-size: 2.2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-align: center;
-        }
-
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 1rem;
-            font-weight: 300;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        /* Tabs */
+        /* ---------- tabs ---------- */
         .tabs {
-            display: flex;
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 12px;
-            padding: 0.4rem;
-            margin-bottom: 1.5rem;
+            display: flex; background: rgba(15,23,42,.5);
+            border-radius: 12px; padding: .35rem; margin-bottom: 1.25rem; gap: .25rem;
         }
-
         .tab-btn {
-            flex: 1;
-            padding: 0.8rem;
-            text-align: center;
-            background: transparent;
-            color: var(--text-muted);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            margin: 0;
+            flex: 1; padding: .7rem .5rem; text-align: center; background: transparent;
+            color: var(--text-muted); border: none; border-radius: 9px; cursor: pointer;
+            font-weight: 500; font-size: .9rem; transition: all .25s ease;
         }
+        .tab-btn.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,.3); }
+        .tab-btn:hover:not(.active) { color: #fff; background: rgba(255,255,255,.08); }
+        .tab-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn .35s ease; }
+        @keyframes fadeIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:none} }
 
-        .tab-btn:hover:not(.active) {
-            color: white;
-            background: rgba(255,255,255,0.1);
+        /* ---------- model strip ---------- */
+        .model-strip {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: .75rem; flex-wrap: wrap;
+            padding: .6rem .85rem; margin-bottom: 1.25rem;
+            background: rgba(15,23,42,.45); border: 1px solid var(--glass-border);
+            border-radius: 10px; font-size: .78rem; color: var(--text-muted);
         }
+        .model-strip strong { color: var(--text-main); font-weight: 500; }
 
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.4s ease;
+        /* ---------- form ---------- */
+        .section-label {
+            font-size: .72rem; text-transform: uppercase; letter-spacing: .08em;
+            color: var(--text-dim); font-weight: 600; margin: 1.15rem 0 .6rem;
         }
-
-        .tab-content.active {
-            display: block;
+        .section-label:first-of-type { margin-top: 0; }
+        .form-group { margin-bottom: .9rem; }
+        .form-group label {
+            display: block; font-size: .82rem; color: var(--text-muted);
+            margin-bottom: .35rem; font-weight: 400;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Form Controls */
-        .form-group {
-            margin-bottom: 1.2rem;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
+        .hint { display: block; font-size: .72rem; color: var(--text-dim); margin-top: .25rem; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0 1rem; }
 
         input, select, textarea {
-            width: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            border-radius: 12px;
-            padding: 0.8rem 1rem;
-            font-size: 1rem;
-            transition: all 0.2s ease;
-            outline: none;
+            width: 100%; padding: .7rem .8rem; border-radius: 10px;
+            background: var(--field-bg); border: 1px solid var(--glass-border);
+            color: var(--text-main); font-size: .9rem; transition: border-color .2s, box-shadow .2s;
         }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
         input:focus, select:focus, textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-            background: rgba(15, 23, 42, 0.8);
+            outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,.18);
         }
+        textarea { resize: vertical; min-height: 84px; }
+        select { appearance: none; cursor: pointer;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat; background-position: right .65rem center; background-size: 15px;
+            padding-right: 2.1rem;
+        }
+        select option { background: #1e293b; color: var(--text-main); }
 
-        select option {
-            background-color: var(--bg-color);
-            color: var(--text-main);
+        .submit-btn {
+            width: 100%; margin-top: .5rem; padding: .85rem; border: none; border-radius: 11px;
+            background: var(--primary); color: #fff; font-size: .95rem; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .6rem;
+            transition: background .2s;
         }
-
-        /* Submit Button */
-        button.submit-btn {
-            width: 100%;
-            background: linear-gradient(135deg, var(--primary), var(--accent-1));
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 1rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            margin-top: 1rem;
+        .submit-btn:hover:not(:disabled) { background: var(--primary-hover); }
+        .submit-btn:disabled { opacity: .65; cursor: not-allowed; }
+        .ghost-btn {
+            padding: .5rem .9rem; border-radius: 9px; background: rgba(255,255,255,.07);
+            color: var(--text-main); border: 1px solid var(--glass-border);
+            cursor: pointer; font-size: .82rem; transition: background .2s;
         }
-
-        button.submit-btn:hover {
-            transform: scale(1.02);
-            box-shadow: var(--glow);
-        }
-
-        button.submit-btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
+        .ghost-btn:hover { background: rgba(255,255,255,.14); }
 
         .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            display: none;
-            margin-left: 10px;
-            vertical-align: middle;
+            display: none; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.35);
+            border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        /* ---------- result ---------- */
+        .result-card {
+            display: none; margin-top: 1.1rem; padding: 1.15rem 1.3rem;
+            border-radius: 14px; border: 1px solid; background: rgba(15,23,42,.5);
         }
-
-        /* Result Alert */
-        .result-alert {
-            margin-top: 1.5rem;
-            padding: 1rem;
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            display: none;
-            text-align: center;
-            font-size: 1.1rem;
-            font-weight: 600;
-            animation: pulse-border 2s infinite;
+        .result-card.show { display: block; animation: fadeIn .3s ease; }
+        .result-label {
+            font-size: .72rem; text-transform: uppercase; letter-spacing: .08em;
+            font-weight: 600; opacity: .8; margin-bottom: .3rem;
         }
+        .result-value { font-size: 2rem; font-weight: 600; line-height: 1.15; }
+        .result-note { font-size: .85rem; opacity: .85; margin-top: .3rem; }
+        .result-meta { font-size: .72rem; color: var(--text-dim); margin-top: .55rem; }
+        .r-success { border-color: rgba(16,185,129,.45); color: #6ee7b7; }
+        .r-warning { border-color: rgba(245,158,11,.45); color: #fcd34d; }
+        .r-danger  { border-color: rgba(239,68,68,.45);  color: #fca5a5; }
+        .r-info    { border-color: rgba(59,130,246,.45); color: #93c5fd; }
 
-        .result-alert.success { background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); }
-        .result-alert.warning { background: rgba(245, 158, 11, 0.1); border-color: var(--warning); color: var(--warning); }
-        .result-alert.danger { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); }
-        .result-alert.info { background: rgba(59, 130, 246, 0.1); border-color: var(--primary); color: var(--primary); }
+        .app-footer {
+            margin-top: 1.5rem; text-align: center;
+            font-size: .74rem; color: var(--text-dim); line-height: 1.7;
+        }
+        .app-footer a { color: var(--text-muted); }
 
-        @keyframes pulse-border {
-            0% { box-shadow: 0 0 0 0 rgba(255,255,255, 0.1); }
-            70% { box-shadow: 0 0 0 10px rgba(255,255,255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255,255,255, 0); }
+        @media (max-width: 560px) {
+            body { padding: 1.25rem .9rem 2rem; }
+            .glass-panel { padding: 1.25rem; }
+            .tab-btn { font-size: .8rem; padding: .6rem .3rem; }
+            .result-value { font-size: 1.6rem; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <main class="glass-panel">
-            <header>
-                <h1>Support Ops AI</h1>
-                <p class="subtitle">Cloud API Interface</p>
-            </header>
-
-            <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('priority')">Priority Routing</button>
-                <button class="tab-btn" onclick="showTab('sla')">SLA Prediction</button>
-                <button class="tab-btn" onclick="showTab('satisfaction')">Satisfaction Insights</button>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-                <button type="button" style="padding: 0.5rem 1rem; border-radius: 8px; background: rgba(255,255,255,0.1); color: var(--text-main); border: 1px solid var(--glass-border); cursor: pointer;" onclick="loadSample()" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Load Sample Ticket</button>
-            </div>
-
-            <!-- PRIORITY TAB -->
-            <div id="tab-priority" class="tab-content active">
-                <form id="form-priority" onsubmit="handlePredict(event, 'predict_priority')">
-                    <div class="form-group">
-                        <label>Issue Description</label>
-                        <textarea name="issue_description" required minlength="5">Login page is not loading on my laptop.</textarea>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Product</label>
-                            <select name="product">
-                                <option value="Web Portal">Web Portal</option>
-                                <option value="Mobile App">Mobile App</option>
-                                <option value="Payment Gateway">Payment Gateway</option>
-                                <option value="E-commerce Store">E-commerce Store</option>
-                                <option value="API Service">API Service</option>
-                                <option value="CRM Platform">CRM Platform</option>
-                                <option value="Cloud Storage">Cloud Storage</option>
-                                <option value="Billing System">Billing System</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Category</label>
-                            <input type="text" name="category" value="Login Issue" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Channel</label>
-                            <select name="channel">
-                                <option value="Email">Email</option>
-                                <option value="Chat">Chat</option>
-                                <option value="Phone">Phone</option>
-                                <option value="Social Media">Social Media</option>
-                                <option value="Web Form">Web Form</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Subscription</label>
-                            <select name="subscription_type">
-                                <option value="Free">Free</option>
-                                <option value="Basic">Basic</option>
-                                <option value="Premium" selected>Premium</option>
-                                <option value="Enterprise">Enterprise</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Current Priority (optional hint)</label>
-                            <select name="priority">
-                                <option value="Urgent">Urgent</option>
-                                <option value="High">High</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="Low">Low</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" class="submit-btn" id="btn-priority">
-                        <span>Predict Priority</span><div class="spinner"></div>
-                    </button>
-                    <div class="result-alert" id="res-priority"></div>
-                </form>
-            </div>
-
-            <!-- SLA TAB -->
-            <div id="tab-sla" class="tab-content">
-                <form id="form-sla" onsubmit="handlePredict(event, 'predict_resolution_hours')">
-                    <div class="form-group">
-                        <label>Issue Description</label>
-                        <textarea name="issue_description" required minlength="5">App crashes immediately after the latest update.</textarea>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Category</label>
-                            <input type="text" name="category" value="Bug Report" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Priority</label>
-                            <select name="priority">
-                                <option value="Urgent">Urgent</option>
-                                <option value="High">High</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="Low">Low</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>First Response (hrs)</label>
-                            <input type="number" name="first_response_time_hours" value="2.5" step="0.1" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Complexity Score (1-10)</label>
-                            <input type="number" name="issue_complexity_score" value="7" min="1" max="10" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="submit-btn" id="btn-sla">
-                        <span>Estimate Resolution Time</span><div class="spinner"></div>
-                    </button>
-                    <div class="result-alert" id="res-sla"></div>
-                </form>
-            </div>
-
-            <!-- SATISFACTION TAB -->
-            <div id="tab-satisfaction" class="tab-content">
-                <form id="form-satisfaction" onsubmit="handlePredict(event, 'predict_satisfaction')">
-                    <div class="form-group">
-                        <label>Issue Description</label>
-                        <textarea name="issue_description" required minlength="5">The support agent was helpful but it took too long to reply.</textarea>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Category</label>
-                            <input type="text" name="category" value="General Inquiry" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Priority</label>
-                            <select name="priority">
-                                <option value="Urgent">Urgent</option>
-                                <option value="High">High</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="Low">Low</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Channel</label>
-                            <select name="channel">
-                                <option value="Email">Email</option>
-                                <option value="Chat">Chat</option>
-                                <option value="Phone">Phone</option>
-                                <option value="Social Media">Social Media</option>
-                                <option value="Web Form">Web Form</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Subscription</label>
-                            <select name="subscription_type">
-                                <option value="Free">Free</option>
-                                <option value="Basic">Basic</option>
-                                <option value="Premium" selected>Premium</option>
-                                <option value="Enterprise">Enterprise</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>First Response (hrs)</label>
-                            <input type="number" name="first_response_time_hours" value="24.0" step="0.1" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="submit-btn" id="btn-satisfaction">
-                        <span>Predict Satisfaction</span><div class="spinner"></div>
-                    </button>
-                    <div class="result-alert" id="res-satisfaction"></div>
-                </form>
-            </div>
-
-        </main>
+<div class="container">
+    <div class="app-header">
+        <div class="brand">
+            <h1>Support Ops Intelligence</h1>
+            <span>Ticket triage &amp; SLA forecasting</span>
+        </div>
+        <div class="status" id="status">
+            <span class="dot pending" id="status-dot"></span>
+            <span id="status-text">Checking service…</span>
+        </div>
     </div>
 
-    <script>
-        function loadSample() {
-            const sample = {
-                issue_description: 'I am unable to access my account after entering the correct credentials.',
-                category: 'Login Issue',
-                product: 'Web Portal',
-                channel: 'Email',
-                subscription_type: 'Premium',
-                priority: 'Medium',
-                first_response_time_hours: 12.0,
-                issue_complexity_score: 5
-            };
-            document.querySelectorAll('input, select, textarea').forEach(el => {
-                if (sample[el.name] !== undefined) {
-                    el.value = sample[el.name];
-                }
+    <main class="glass-panel">
+        <div class="tabs" role="tablist">
+            <button class="tab-btn active" type="button" role="tab" onclick="showTab('priority', this)">Priority Routing</button>
+            <button class="tab-btn" type="button" role="tab" onclick="showTab('sla', this)">SLA Prediction</button>
+            <button class="tab-btn" type="button" role="tab" onclick="showTab('satisfaction', this)">Satisfaction Risk</button>
+        </div>
+
+        <!-- ========== PRIORITY ========== -->
+        <div id="tab-priority" class="tab-content active">
+            <div class="model-strip">
+                <span>Model: <strong>Gradient Boosting</strong> · TF-IDF + tabular</span>
+                <span>Held-out accuracy: <strong>82.1%</strong></span>
+            </div>
+            <form id="form-priority" onsubmit="handlePredict(event, 'predict_priority')">
+                <div class="section-label">Ticket</div>
+                <div class="form-group">
+                    <label for="p-desc">Issue description</label>
+                    <textarea id="p-desc" name="issue_description" required minlength="5">Login page is not loading on my laptop.</textarea>
+                    <span class="hint">Urgency wording in the description drives roughly half of this prediction.</span>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="p-complexity">Issue complexity score (1–10)</label>
+                        <input type="number" id="p-complexity" name="issue_complexity_score" value="5" min="1" max="10" required>
+                        <span class="hint">~25% of the model.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-prev">Previous tickets from customer</label>
+                        <input type="number" id="p-prev" name="previous_tickets" value="10" min="0" max="20" required>
+                        <span class="hint">~24% of the model.</span>
+                    </div>
+                </div>
+
+                <div class="section-label">Context</div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="p-product">Product</label>
+                        <select id="p-product" name="product" data-vocab="products"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-category">Category</label>
+                        <select id="p-category" name="category" data-vocab="categories"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-channel">Channel</label>
+                        <select id="p-channel" name="channel" data-vocab="channels"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-sub">Subscription</label>
+                        <select id="p-sub" name="subscription_type" data-vocab="subscriptions"></select>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn"><span>Predict priority</span><div class="spinner"></div></button>
+                <div class="result-card" id="res-priority"></div>
+            </form>
+        </div>
+
+        <!-- ========== SLA ========== -->
+        <div id="tab-sla" class="tab-content">
+            <div class="model-strip">
+                <span>Model: <strong>Random Forest</strong> · log-transformed target</span>
+                <span>Held-out R²: <strong>0.719</strong></span>
+            </div>
+            <form id="form-sla" onsubmit="handlePredict(event, 'predict_resolution_hours')">
+                <div class="section-label">Ticket</div>
+                <div class="form-group">
+                    <label for="s-desc">Issue description</label>
+                    <textarea id="s-desc" name="issue_description" required minlength="5">App crashes immediately after the latest update.</textarea>
+                    <span class="hint">~18% of the model.</span>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="s-complexity">Issue complexity score (1–10)</label>
+                        <input type="number" id="s-complexity" name="issue_complexity_score" value="7" min="1" max="10" required>
+                        <span class="hint">Largest single driver — ~36% of the model.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="s-prev">Previous tickets from customer</label>
+                        <input type="number" id="s-prev" name="previous_tickets" value="10" min="0" max="20" required>
+                        <span class="hint">~22% of the model.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="s-category">Category</label>
+                        <select id="s-category" name="category" data-vocab="categories" data-default="Bug Report"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="s-priority">Priority</label>
+                        <select id="s-priority" name="priority" data-vocab="priorities"></select>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn"><span>Estimate resolution time</span><div class="spinner"></div></button>
+                <div class="result-card" id="res-sla"></div>
+            </form>
+        </div>
+
+        <!-- ========== SATISFACTION ========== -->
+        <div id="tab-satisfaction" class="tab-content">
+            <div class="model-strip">
+                <span>Model: <strong>Random Forest</strong> · in-flight risk check</span>
+                <span>Held-out accuracy: <strong>93.1%</strong></span>
+            </div>
+            <form id="form-satisfaction" onsubmit="handlePredict(event, 'predict_satisfaction')">
+                <div class="section-label">Ticket</div>
+                <div class="form-group">
+                    <label for="t-desc">Issue description</label>
+                    <textarea id="t-desc" name="issue_description" required minlength="5">The support agent was helpful but it took too long to reply.</textarea>
+                </div>
+
+                <div class="section-label">Service so far</div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="t-response">First response time (hours)</label>
+                        <input type="number" id="t-response" name="first_response_time_hours" value="24.0" step="0.5" min="0" required>
+                        <span class="hint">~10% of the model.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="t-prev">Previous tickets from customer</label>
+                        <input type="number" id="t-prev" name="previous_tickets" value="10" min="0" max="20" required>
+                        <span class="hint">~12% of the model.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="t-complexity">Issue complexity score (1–10)</label>
+                        <input type="number" id="t-complexity" name="issue_complexity_score" value="5" min="1" max="10" required>
+                        <span class="hint">~8% of the model.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="t-priority">Priority</label>
+                        <select id="t-priority" name="priority" data-vocab="priorities"></select>
+                    </div>
+                </div>
+
+                <div class="section-label">Context</div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="t-category">Category</label>
+                        <select id="t-category" name="category" data-vocab="categories" data-default="Payment Problem"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="t-channel">Channel</label>
+                        <select id="t-channel" name="channel" data-vocab="channels"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="t-sub">Subscription</label>
+                        <select id="t-sub" name="subscription_type" data-vocab="subscriptions"></select>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn"><span>Predict satisfaction</span><div class="spinner"></div></button>
+                <div class="result-card" id="res-satisfaction"></div>
+            </form>
+        </div>
+    </main>
+
+    <div style="display:flex; justify-content:center; margin-top:1rem;">
+        <button type="button" class="ghost-btn" onclick="loadSample()">Load sample ticket</button>
+    </div>
+
+    <div class="app-footer">
+        Predictions are model estimates, not guarantees. Labels are engineered from business rules —
+        treat metrics as pipeline validity, not production KPIs.<br>
+        <a href="/docs">API documentation</a> · <a href="/health">Service health</a>
+    </div>
+</div>
+
+<script>
+    /* Vocabularies match the values the models were trained on. Anything outside these
+       lists is silently encoded as all-zeros by OneHotEncoder(handle_unknown='ignore'),
+       which is why every categorical input is a closed list rather than free text. */
+    const VOCAB = {
+        products: ['API Service', 'Analytics Dashboard', 'Billing System', 'CRM Platform',
+                   'Cloud Storage', 'E-commerce Store', 'Mobile App', 'Payment Gateway',
+                   'Subscription Service', 'Web Portal'],
+        categories: ['Account Suspension', 'Bug Report', 'Data Sync Issue', 'Feature Request',
+                     'Login Issue', 'Payment Problem', 'Performance Issue', 'Refund Request',
+                     'Security Concern', 'Subscription Cancellation'],
+        channels: ['Chat', 'Email', 'Phone', 'Social Media', 'Web Form'],
+        subscriptions: ['Basic', 'Enterprise', 'Free', 'Premium'],
+        priorities: ['Urgent', 'High', 'Medium', 'Low'],
+    };
+    const VOCAB_DEFAULT = {
+        products: 'Web Portal', categories: 'Login Issue', channels: 'Email',
+        subscriptions: 'Premium', priorities: 'Medium',
+    };
+
+    const PRIORITY_NOTE = {
+        Urgent: 'Route immediately to a senior agent.',
+        High: 'Queue ahead of standard tickets.',
+        Medium: 'Handle in normal rotation.',
+        Low: 'Safe to batch with routine work.',
+    };
+    const PRIORITY_TONE = { Urgent: 'danger', High: 'warning', Medium: 'info', Low: 'success' };
+    const SATISFACTION_NOTE = {
+        High: 'On track — no intervention needed.',
+        Mid: 'Monitor follow-up and confirm resolution quality.',
+        Low: 'At-risk customer — consider proactive outreach.',
+    };
+    const SATISFACTION_TONE = { High: 'success', Mid: 'warning', Low: 'danger' };
+
+    /* Populate every closed-list select from VOCAB. */
+    document.querySelectorAll('select[data-vocab]').forEach(sel => {
+        const key = sel.dataset.vocab;
+        const chosen = sel.dataset.default || VOCAB_DEFAULT[key];
+        VOCAB[key].forEach(value => {
+            const opt = document.createElement('option');
+            opt.value = value;
+            opt.textContent = value;
+            if (value === chosen) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    });
+
+    /* Tab switching. Takes the clicked button explicitly rather than relying on the
+       deprecated global `event`. */
+    function showTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function loadSample() {
+        const sample = {
+            issue_description: 'I am unable to access my account after entering the correct credentials.',
+            category: 'Login Issue', product: 'Web Portal', channel: 'Email',
+            subscription_type: 'Premium', priority: 'Medium',
+            first_response_time_hours: 12, issue_complexity_score: 5, previous_tickets: 10,
+        };
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            if (sample[el.name] === undefined) return;
+            const value = String(sample[el.name]);
+            /* Never assign a value a <select> has no option for - it would blank the field. */
+            if (el.tagName === 'SELECT' && !Array.from(el.options).some(o => o.value === value)) return;
+            el.value = value;
+        });
+    }
+
+    /* Service status. Cloud Run scales to zero, so a cold instance also has to pull
+       ~285 MB of model bundles from Hugging Face before the first prediction. */
+    async function checkHealth() {
+        const dot = document.getElementById('status-dot');
+        const text = document.getElementById('status-text');
+        try {
+            const res = await fetch('/health', { cache: 'no-store' });
+            if (!res.ok) throw new Error('unhealthy');
+            const data = await res.json();
+            const loaded = ['classification_model', 'regression_model', 'satisfaction_model']
+                .filter(k => data[k]).length;
+            dot.className = 'dot online';
+            text.textContent = loaded === 3
+                ? 'Service online · 3 models loaded'
+                : `Service online · ${loaded}/3 models loaded`;
+        } catch (err) {
+            dot.className = 'dot offline';
+            text.textContent = 'Service unreachable';
+        }
+    }
+    checkHealth();
+
+    function renderResult(box, tone, label, value, note, meta) {
+        box.className = 'result-card show r-' + tone;
+        box.innerHTML = '';
+        const mk = (cls, txt) => {
+            const d = document.createElement('div');
+            d.className = cls;
+            d.textContent = txt;
+            return d;
+        };
+        box.appendChild(mk('result-label', label));
+        box.appendChild(mk('result-value', value));
+        if (note) box.appendChild(mk('result-note', note));
+        if (meta) box.appendChild(mk('result-meta', meta));
+    }
+
+    function formatDuration(hours) {
+        if (hours < 24) return `about ${Math.round(hours)} hours`;
+        return `about ${(hours / 24).toFixed(1)} days`;
+    }
+
+    async function handlePredict(e, endpoint) {
+        e.preventDefault();
+        const form = e.target;
+        const btn = form.querySelector('.submit-btn');
+        const spinner = form.querySelector('.spinner');
+        const tabId = endpoint === 'predict_priority' ? 'priority'
+                    : endpoint === 'predict_resolution_hours' ? 'sla' : 'satisfaction';
+        const box = document.getElementById('res-' + tabId);
+
+        btn.disabled = true;
+        spinner.style.display = 'inline-block';
+        box.className = 'result-card';
+
+        /* A cold instance can take a while; say so rather than spinning silently. */
+        const slowNotice = setTimeout(() => {
+            renderResult(box, 'info', 'Working', 'Waking the service…',
+                'The instance had scaled to zero and is loading model bundles. First request can take up to a minute.');
+        }, 3500);
+
+        const payload = Object.fromEntries(new FormData(form).entries());
+        ['first_response_time_hours'].forEach(k => { if (payload[k] !== undefined) payload[k] = parseFloat(payload[k]); });
+        ['issue_complexity_score', 'previous_tickets'].forEach(k => { if (payload[k] !== undefined) payload[k] = parseInt(payload[k], 10); });
+
+        const started = performance.now();
+        try {
+            const response = await fetch('/' + endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             });
-        }
+            clearTimeout(slowNotice);
 
-        // Tab Switching Logic
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-
-        // Form Submission Logic
-        async function handlePredict(e, endpoint) {
-            e.preventDefault();
-            
-            const form = e.target;
-            const btn = form.querySelector('.submit-btn');
-            const spinner = form.querySelector('.spinner');
-            
-            // Map endpoint to tab ID
-            const tabId = endpoint === 'predict_priority' ? 'priority' : 
-                          endpoint === 'predict_resolution_hours' ? 'sla' : 'satisfaction';
-            
-            const resultBox = document.getElementById(`res-${tabId}`);
-            
-            // Reset state
-            btn.disabled = true;
-            spinner.style.display = 'inline-block';
-            resultBox.style.display = 'none';
-            resultBox.className = 'result-alert';
-            
-            // Build JSON payload
-            const formData = new FormData(form);
-            const payload = Object.fromEntries(formData.entries());
-            
-            // Convert numbers
-            if (payload.first_response_time_hours) payload.first_response_time_hours = parseFloat(payload.first_response_time_hours);
-            if (payload.issue_complexity_score) payload.issue_complexity_score = parseInt(payload.issue_complexity_score);
-
-            const baseUrl = window.location.origin;
-            
-            try {
-                const response = await fetch(`${baseUrl}/${endpoint}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!response.ok) throw new Error("API request failed.");
-                
-                const data = await response.json();
-                resultBox.style.display = 'block';
-
-                if (endpoint === 'predict_priority') {
-                    const p = data.predicted_priority;
-                    resultBox.textContent = `Predicted Priority: ${p}`;
-                    if(p === 'Urgent') resultBox.classList.add('danger');
-                    else if(p === 'High') resultBox.classList.add('warning');
-                    else if(p === 'Medium') resultBox.classList.add('info');
-                    else resultBox.classList.add('success');
-                } 
-                else if (endpoint === 'predict_resolution_hours') {
-                    const h = data.predicted_resolution_hours.toFixed(1);
-                    resultBox.textContent = `Est. Resolution Time: ${h} hours`;
-                    resultBox.classList.add('info');
-                } 
-                else {
-                    const s = data.predicted_satisfaction_band;
-                    resultBox.textContent = `Predicted Satisfaction: ${s}`;
-                    if(s === 'High') resultBox.classList.add('success');
-                    else if(s === 'Mid') resultBox.classList.add('warning');
-                    else resultBox.classList.add('danger');
-                }
-
-            } catch (err) {
-                console.error(err);
-                resultBox.style.display = 'block';
-                resultBox.className = 'result-alert danger';
-                resultBox.textContent = "Error communicating with API.";
-            } finally {
-                btn.disabled = false;
-                spinner.style.display = 'none';
+            if (!response.ok) {
+                let detail = `HTTP ${response.status}`;
+                try {
+                    const err = await response.json();
+                    if (err.detail) detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+                } catch (_) { /* non-JSON error body */ }
+                renderResult(box, 'danger', 'Request failed', 'Could not score this ticket', detail);
+                return;
             }
+
+            const data = await response.json();
+            const elapsed = ((performance.now() - started) / 1000).toFixed(2);
+            const meta = `Scored in ${elapsed}s`;
+
+            if (endpoint === 'predict_priority') {
+                const p = data.predicted_priority;
+                renderResult(box, PRIORITY_TONE[p] || 'info', 'Predicted priority', p, PRIORITY_NOTE[p] || '', meta);
+            } else if (endpoint === 'predict_resolution_hours') {
+                const h = data.predicted_resolution_hours;
+                const tone = h < 48 ? 'success' : h < 120 ? 'warning' : 'danger';
+                renderResult(box, tone, 'Estimated resolution time', `${h.toFixed(1)} hours`,
+                             `${formatDuration(h)} from ticket creation.`, meta);
+            } else {
+                const s = data.predicted_satisfaction_band;
+                renderResult(box, SATISFACTION_TONE[s] || 'info', 'Predicted satisfaction', s, SATISFACTION_NOTE[s] || '', meta);
+            }
+        } catch (err) {
+            clearTimeout(slowNotice);
+            renderResult(box, 'danger', 'Request failed', 'Could not reach the service',
+                         'Check your connection and try again.');
+        } finally {
+            btn.disabled = false;
+            spinner.style.display = 'none';
         }
-    </script>
+    }
+</script>
 </body>
 </html>
