@@ -1,0 +1,43 @@
+﻿version: 3.8
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: supportops-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: 
+      POSTGRES_PASSWORD: 
+      POSTGRES_DB: 
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U -d ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  supportops-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supportops-api
+    restart: unless-stopped
+    ports:
+      - 8002:8002
+    environment:
+      - PORT=8002
+      - OPENROUTER_API_KEY=
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=
+      - DB_PASSWORD=
+      - DB_NAME=
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -1,7 +1,14 @@
 """Shared helpers for Streamlit inference pages."""
 
 import os
+import sys
 from functools import lru_cache
+
+try:
+    import sklearn._loss._loss
+    sys.modules.setdefault('_loss', sklearn._loss._loss)
+except Exception:
+    pass
 
 import joblib
 import numpy as np

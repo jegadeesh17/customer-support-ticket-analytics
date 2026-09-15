@@ -108,3 +108,17 @@ def predict_satisfaction_band(ticket: TicketInput) -> SatisfactionResponse:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=repr(exc)) from exc
     return SatisfactionResponse(predicted_satisfaction_band=str(band))
+
+
+from src.agent_triage import AgentTriageResult, run_agent_triage
+
+
+@app.post("/triage_agent", response_model=AgentTriageResult)
+def triage_agent_endpoint(ticket: TicketInput) -> AgentTriageResult:
+    """Autonomous agentic triage: evaluates frustration, root cause, escalation and drafted response."""
+    payload = {**DEFAULT_INFERENCE_ROW, **ticket.model_dump()}
+    try:
+        result = run_agent_triage(payload)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=repr(exc)) from exc
+    return result
