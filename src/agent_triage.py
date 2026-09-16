@@ -7,10 +7,11 @@ escalation decisions, and drafted responses using an LLM or fallback heuristics.
 from __future__ import annotations
 
 import json
-import os
 import re
 from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
+
+from configs.settings import settings
 
 
 class AgentTriageResult(BaseModel):
@@ -107,7 +108,7 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
     If OPENROUTER_API_KEY or OPENAI_API_KEY is available, uses the LLM gateway.
     Falls back gracefully to deterministic heuristics on network error or absent key.
     """
-    key = api_key or os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+    key = api_key or settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY
     if not key:
         return _extract_heuristics(ticket)
 

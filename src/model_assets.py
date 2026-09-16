@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from configs.settings import Settings
+
 MODEL_FILES = (
     "classification_model.pkl",
     "regression_model.pkl",
@@ -13,7 +15,11 @@ MODEL_FILES = (
 
 
 def hf_repo_id() -> str | None:
-    return os.getenv("HF_MODEL_REPO")
+    # Instantiate fresh (rather than importing the module-level `settings`
+    # singleton) so this keeps reading the current process environment on
+    # every call, matching the previous `os.getenv("HF_MODEL_REPO")`
+    # semantics that tests rely on via `unittest.mock.patch.dict(os.environ, ...)`.
+    return Settings().HF_MODEL_REPO
 
 
 def ensure_models(models_dir: str) -> str:

@@ -29,6 +29,7 @@ COPY --from=builder /opt/venv /opt/venv
 
 COPY --chown=appuser:appgroup api/ api/
 COPY --chown=appuser:appgroup src/ src/
+COPY --chown=appuser:appgroup configs/ configs/
 COPY --chown=appuser:appgroup data/customer_support_ticket_sample.csv data/
 RUN mkdir -p models && chown -R appuser:appgroup /app
 

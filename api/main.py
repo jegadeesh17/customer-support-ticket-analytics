@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 
@@ -14,6 +15,11 @@ if ROOT not in sys.path:
 
 from src.constants import DEFAULT_INFERENCE_ROW
 from src.inference import predict_classification, predict_regression, predict_satisfaction
+
+logger = logging.getLogger(__name__)
+
+INTERNAL_ERROR_DETAIL = "An internal error occurred while processing the request."
+MODEL_UNAVAILABLE_DETAIL = "Service temporarily unavailable: required model file is missing."
 
 app = FastAPI(
     title="Support Ops Intelligence API",
@@ -80,9 +86,11 @@ def predict_priority(ticket: TicketInput) -> PriorityResponse:
     try:
         priority = predict_classification(payload)
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        logger.exception("Missing model file in predict_priority")
+        raise HTTPException(status_code=503, detail=MODEL_UNAVAILABLE_DETAIL) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=repr(exc)) from exc
+        logger.exception("Unhandled error in predict_priority")
+        raise HTTPException(status_code=500, detail=INTERNAL_ERROR_DETAIL) from exc
     return PriorityResponse(predicted_priority=str(priority))
 
 
@@ -92,9 +100,11 @@ def predict_resolution_hours(ticket: TicketInput) -> ResolutionResponse:
     try:
         hours = predict_regression(payload)
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        logger.exception("Missing model file in predict_resolution_hours")
+        raise HTTPException(status_code=503, detail=MODEL_UNAVAILABLE_DETAIL) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=repr(exc)) from exc
+        logger.exception("Unhandled error in predict_resolution_hours")
+        raise HTTPException(status_code=500, detail=INTERNAL_ERROR_DETAIL) from exc
     return ResolutionResponse(predicted_resolution_hours=float(hours))
 
 
@@ -104,9 +114,11 @@ def predict_satisfaction_band(ticket: TicketInput) -> SatisfactionResponse:
     try:
         band = predict_satisfaction(payload)
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        logger.exception("Missing model file in predict_satisfaction_band")
+        raise HTTPException(status_code=503, detail=MODEL_UNAVAILABLE_DETAIL) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=repr(exc)) from exc
+        logger.exception("Unhandled error in predict_satisfaction_band")
+        raise HTTPException(status_code=500, detail=INTERNAL_ERROR_DETAIL) from exc
     return SatisfactionResponse(predicted_satisfaction_band=str(band))
 
 
@@ -120,5 +132,6 @@ def triage_agent_endpoint(ticket: TicketInput) -> AgentTriageResult:
     try:
         result = run_agent_triage(payload)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=repr(exc)) from exc
+        logger.exception("Unhandled error in triage_agent_endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_ERROR_DETAIL) from exc
     return result

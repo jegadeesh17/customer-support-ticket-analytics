@@ -15,7 +15,7 @@
 ### 1.1 Problem Definition & Business Context
 Modern SaaS customer support desks receive hundreds of thousands of incoming tickets across heterogeneous channels (email, web portal, chat, phone). Manual triage introduces variable latency, SLA breaches for critical enterprise accounts, and suboptimal routing.
 This platform provides:
-1. **Low-Latency Classical Multi-Task ML Inference** (<15ms per prediction) for every incoming ticket:
+1. **Low-Latency Classical Multi-Task ML Inference** (target <15ms per prediction, see §4) for every incoming ticket:
    - **Priority Classification**: 4-class (Urgent, High, Medium, Low)
    - **Resolution Time Regression**: Log-transformed hours to resolution
    - **Customer Satisfaction Band**: 3-class (High, Mid, Low)
@@ -79,7 +79,29 @@ In support ticket analytics, post-creation attributes routinely contaminate trai
 
 ## 4. Latency, Concurrency & Cost Budgets
 
-| Metric | Classical ML Tier | Agentic Escalation Tier |
+> **Status: targets, not yet benchmarked in production.** The figures below were originally
+> asserted design goals with no benchmark code backing them. `scripts/benchmark_inference.py`
+> now exists to measure the Classical ML Tier (loads each model bundle once per process, matching
+> the `@lru_cache` warm-process pattern in `src/inference.py`, then times N repeated single-row
+> predictions). A local run on a warm dev-machine process (200 iterations/model, CPU inference,
+> Windows laptop — not the production Cloud Run instance/CPU class) measured:
+>
+> | Task | p50 | p95 | p99 |
+> | :--- | ---: | ---: | ---: |
+> | classification | ~24 ms | ~43 ms | ~64 ms |
+> | regression | ~50 ms | ~78 ms | ~95 ms |
+> | satisfaction | ~50 ms | ~86 ms | ~125 ms |
+>
+> These are roughly 2-3x the table's p50/p95 targets and up to ~3x at p99, and they exclude request/response
+> (de)serialization and network overhead, so real API latency will be somewhat higher still. The gap is likely
+> explained by unpickling/prediction cost of the larger regression/satisfaction bundles (regression_model.pkl
+> is 218 MB, see `src/inference.py`) plus this being a laptop rather than the deployed Cloud Run CPU class.
+> The table below is kept as the aspirational **target**; treat it as directional until it is re-measured
+> against the actual Cloud Run service (e.g. with `scripts/benchmark_inference.py` run inside the deployed
+> container, or an end-to-end load test against `/predict_*`). The Agentic Escalation Tier numbers remain
+> entirely unverified — no benchmark exists for that tier yet.
+
+| Metric | Classical ML Tier (target) | Agentic Escalation Tier (target) |
 | :--- | :--- | :--- |
 | **p50 Latency** | <= 8 ms | <= 800 ms |
 | **p95 Latency** | <= 25 ms | <= 2,200 ms |
