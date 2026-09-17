@@ -13,6 +13,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from api.main import app
+from configs.settings import settings
 from src.agent_triage import AgentTriageResult, run_agent_triage
 
 
@@ -98,3 +99,49 @@ def test_agent_triage_llm_mock():
         assert res.triage_source == "agent_llm"
         assert res.escalate_to_tier2 is True
         assert res.confidence == 0.95
+
+
+def test_groq_provider_used_when_configured(monkeypatch):
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "gsk-mock-key")
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", None)
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", None)
+
+    mock_payload = {
+        "ticket_id": None,
+        "escalate_to_tier2": True,
+        "customer_frustration_score": 8,
+        "root_cause_category": "Service Outage",
+        "urgency_reasoning": "Enterprise outage.",
+        "recommended_action": "Escalate to on-call.",
+        "auto_drafted_response": "We are investigating.",
+        "confidence": 0.9,
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps({
+        "choices": [{"message": {"content": json.dumps(mock_payload)}}]
+    }).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    captured_requests = []
+
+    def fake_urlopen(req, timeout=5):
+        captured_requests.append(req)
+        return mock_resp
+
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        result = run_agent_triage({"issue_description": "Outage"})
+
+    assert result.triage_source == "agent_llm"
+    assert captured_requests[0].full_url == "https://api.groq.com/openai/v1/chat/completions"
+
+
+def test_groq_failure_falls_back_to_heuristic(monkeypatch):
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "gsk-mock-key")
+
+    with patch("urllib.request.urlopen", side_effect=TimeoutError("no response")):
+        result = run_agent_triage({
+            "issue_description": "App is broken and I am furious",
+            "issue_complexity_score": 9,
+        })
+
+    assert result.triage_source == "heuristic_fallback"

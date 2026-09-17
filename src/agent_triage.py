@@ -102,15 +102,40 @@ def _extract_heuristics(ticket: Dict[str, Any]) -> AgentTriageResult:
     )
 
 
+def _select_provider():
+    """Pick the first configured LLM provider as (endpoint_url, api_key, model).
+
+    Order: Groq (fast, the newly configured provider) -> OpenRouter -> OpenAI.
+    Returns None if nothing is configured, in which case the caller falls
+    back to deterministic heuristics.
+    """
+    if settings.GROQ_API_KEY:
+        return ("https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, settings.GROQ_MODEL)
+    if settings.OPENROUTER_API_KEY:
+        return ("https://openrouter.ai/api/v1/chat/completions", settings.OPENROUTER_API_KEY, "google/gemini-2.0-flash-001")
+    if settings.OPENAI_API_KEY:
+        return ("https://api.openai.com/v1/chat/completions", settings.OPENAI_API_KEY, "gpt-4o-mini")
+    return None
+
+
 def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> AgentTriageResult:
     """Evaluate a support ticket and return structured triage diagnostics.
-    
-    If OPENROUTER_API_KEY or OPENAI_API_KEY is available, uses the LLM gateway.
-    Falls back gracefully to deterministic heuristics on network error or absent key.
+
+    An explicit api_key argument is sent to OpenRouter directly (used by
+    callers/tests that already hold a specific key). Otherwise the first
+    configured provider from _select_provider() is used. Falls back
+    gracefully to deterministic heuristics on network error or when no
+    provider is configured.
     """
-    key = api_key or settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY
-    if not key:
+    if api_key:
+        provider = ("https://openrouter.ai/api/v1/chat/completions", api_key, "google/gemini-2.0-flash-001")
+    else:
+        provider = _select_provider()
+
+    if provider is None:
         return _extract_heuristics(ticket)
+
+    endpoint_url, key, model = provider
 
     try:
         import urllib.request
@@ -132,7 +157,7 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
 
         user_content = json.dumps(ticket, indent=2)
         payload = {
-            "model": "google/gemini-2.0-flash-001",
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Triage this ticket:\n{user_content}"},
@@ -142,7 +167,7 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
         }
 
         req = urllib.request.Request(
-            "https://openrouter.ai/api/v1/chat/completions",
+            endpoint_url,
             data=json.dumps(payload).encode("utf-8"),
             headers={
                 "Authorization": f"Bearer {key}",
