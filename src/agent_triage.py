@@ -7,11 +7,14 @@ escalation decisions, and drafted responses using an LLM or fallback heuristics.
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
 from configs.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 class AgentTriageResult(BaseModel):
@@ -185,6 +188,7 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
             parsed["triage_source"] = "agent_llm"
             return AgentTriageResult(**parsed)
 
-    except Exception:
+    except Exception as exc:
         # Fallback to local heuristic evaluator without throwing
+        logger.warning("LLM provider call failed, falling back to heuristics: %s", exc)
         return _extract_heuristics(ticket)

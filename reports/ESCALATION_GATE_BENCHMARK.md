@@ -1,11 +1,11 @@
 # Escalation Gate Benchmark
 
-Sample size: 500 tickets
+Sample size: 1000 tickets
 
-**Tier 1 handled without escalation: 73.6%**
+**Tier 1 handled without escalation: 69.5%**
 
 Escalation trigger breakdown:
 
-- low_confidence: 59
-- severe_resolution: 63
-- high_risk_segment: 10
+- low_confidence: 147
+- severe_resolution: 140
+- high_risk_segment: 18

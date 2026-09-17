@@ -47,7 +47,7 @@ flowchart TD
     G -->|Confidence < 0.67 OR Resolution > 185h| I[Agentic Triage Engine]
     
     subgraph Autonomous Escalation Tier
-        I --> J[Structured LLM Prompting via OpenRouter/OpenAI]
+        I --> J[Structured LLM Prompting via Groq (primary) / OpenRouter / OpenAI]
         J --> K[Pydantic JSON Contract Validation]
         K --> L[AgentTriageResult: Frustration Score, Root Cause, Auto-Draft, Action]
     end
@@ -115,24 +115,35 @@ In support ticket analytics, post-creation attributes routinely contaminate trai
 ## 5. Agentic Escalation Tier Specification
 
 ### 5.1 Trigger Conditions
-The agentic escalation tier is invoked either explicitly via POST /triage_agent or when downstream rules detect an edge case:
+The agentic escalation tier is invoked automatically whenever the Tier-1 gate below fires, or explicitly via `POST /triage_agent?force=true`:
 1. **Uncertain Priority**: Classifier max class probability < 0.67 (P15 of Tier-1 confidence on real ticket data).
 2. **Critical Outlier**: Regression resolution hours > 185.0 hrs (P85 of Tier-1 resolution estimates on real ticket data).
 3. **High-Risk Segment**: Enterprise subscription with complexity score > 8.
 
 ### 5.2 Structured Output Contract
+The `/triage_agent` endpoint returns a `TwoTierTriageResponse` (see `api/main.py`), which
+always carries the Tier-1 prediction and gate decision, plus Tier-2 diagnostic fields that
+are populated only when Tier 2 actually ran:
 `json
 {
   ticket_id: string,
+  tier1_priority: "High",
+  tier1_confidence: 0.58,
+  tier1_resolution_hours: 210.5,
   escalate_to_tier2: true,
+  escalation_trigger: "severe_resolution",
+  tier2_recommends_escalation: true,
   customer_frustration_score: 8,
   root_cause_category: Database Connectivity Timeout,
   urgency_reasoning: Enterprise customer experiencing production outage with high tenure.,
   recommended_action: Route immediately to Database SRE on-call.,
   auto_drafted_response: Dear Alex, we have flagged this as critical and our core engineering team is actively investigating...,
-  confidence: 0.92
+  triage_source: "agent_llm"
 }
 `
+`escalate_to_tier2` reflects the *gate's* decision (whether Tier 2 ran at all).
+`tier2_recommends_escalation` reflects Tier 2's own opinion (from `AgentTriageResult.escalate_to_tier2`)
+and is `null` whenever Tier 2 did not run (the fast, non-escalated path).
 
 ---
 

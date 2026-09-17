@@ -33,7 +33,12 @@ def compute_escalation_rate(triggers):
 
 def main(sample_size=500):
     df = pd.read_csv(get_data_path())
-    df = df.sample(min(sample_size, len(df)), random_state=42)
+    # random_state=7 is intentionally different from the random_state=42 used
+    # to derive CONFIDENCE_THRESHOLD/RESOLUTION_HOURS_THRESHOLD in
+    # src/triage_gate.py -- reusing that seed would make this measurement
+    # circular (it would just re-confirm the arithmetic that produced the
+    # thresholds). Keep this a genuinely held-out sample.
+    df = df.sample(min(sample_size, len(df)), random_state=7)
 
     triggers = []
     for _, row in df.iterrows():
@@ -66,4 +71,4 @@ def main(sample_size=500):
 
 
 if __name__ == "__main__":
-    main()
+    main(sample_size=1000)

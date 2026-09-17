@@ -135,6 +135,7 @@ class TwoTierTriageResponse(BaseModel):
     tier1_resolution_hours: float
     escalate_to_tier2: bool
     escalation_trigger: Optional[str] = None
+    tier2_recommends_escalation: Optional[bool] = None
     customer_frustration_score: Optional[int] = None
     root_cause_category: Optional[str] = None
     urgency_reasoning: Optional[str] = None
@@ -188,6 +189,7 @@ def triage_agent_endpoint(ticket: TicketInput, force: bool = False) -> TwoTierTr
 
     return TwoTierTriageResponse(
         **base_fields,
+        tier2_recommends_escalation=diagnosis.escalate_to_tier2,
         customer_frustration_score=diagnosis.customer_frustration_score,
         root_cause_category=diagnosis.root_cause_category,
         urgency_reasoning=diagnosis.urgency_reasoning,
