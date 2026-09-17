@@ -145,3 +145,76 @@ def test_groq_failure_falls_back_to_heuristic(monkeypatch):
         })
 
     assert result.triage_source == "heuristic_fallback"
+
+
+def test_two_tier_triage_routine_ticket_no_escalation():
+    with patch("api.main.predict_classification_with_confidence", return_value=("Low", 0.95)):
+        with patch("api.main.predict_regression", return_value=6.0):
+            from api.main import app
+            client = TestClient(app)
+            response = client.post("/triage_agent", json={
+                "issue_description": "Can you update my billing email address please?",
+                "subscription_type": "Basic",
+                "issue_complexity_score": 2,
+            })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["escalate_to_tier2"] is False
+    assert data["escalation_trigger"] is None
+    assert data["customer_frustration_score"] is None
+    assert data["auto_drafted_response"] is None
+    assert data["tier1_priority"] == "Low"
+    assert data["tier1_confidence"] == 0.95
+
+
+def test_two_tier_triage_low_confidence_escalates():
+    with patch("api.main.predict_classification_with_confidence", return_value=("Medium", 0.5)):
+        with patch("api.main.predict_regression", return_value=6.0):
+            from api.main import app
+            client = TestClient(app)
+            response = client.post("/triage_agent", json={
+                "issue_description": "Not sure what's wrong but something feels off.",
+                "subscription_type": "Basic",
+                "issue_complexity_score": 2,
+            })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["escalate_to_tier2"] is True
+    assert data["escalation_trigger"] == "low_confidence"
+    assert data["auto_drafted_response"] is not None
+
+
+def test_two_tier_triage_severe_resolution_escalates():
+    with patch("api.main.predict_classification_with_confidence", return_value=("Medium", 0.95)):
+        with patch("api.main.predict_regression", return_value=72.0):
+            from api.main import app
+            client = TestClient(app)
+            response = client.post("/triage_agent", json={
+                "issue_description": "This migration is taking forever to complete.",
+                "subscription_type": "Basic",
+                "issue_complexity_score": 4,
+            })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["escalate_to_tier2"] is True
+    assert data["escalation_trigger"] == "severe_resolution"
+
+
+def test_two_tier_triage_force_override_escalates_routine_ticket():
+    with patch("api.main.predict_classification_with_confidence", return_value=("Low", 0.95)):
+        with patch("api.main.predict_regression", return_value=6.0):
+            from api.main import app
+            client = TestClient(app)
+            response = client.post(
+                "/triage_agent",
+                params={"force": True},
+                json={
+                    "issue_description": "Just double-checking my subscription renewal date.",
+                    "subscription_type": "Basic",
+                    "issue_complexity_score": 1,
+                },
+            )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["escalate_to_tier2"] is True
+    assert data["escalation_trigger"] == "forced"

@@ -7,6 +7,8 @@ import os
 import sys
 
 from fastapi import FastAPI, HTTPException
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -14,7 +16,8 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from src.constants import DEFAULT_INFERENCE_ROW
-from src.inference import predict_classification, predict_regression, predict_satisfaction
+from src.inference import predict_classification, predict_regression, predict_satisfaction, predict_classification_with_confidence
+from src.triage_gate import should_escalate
 
 logger = logging.getLogger(__name__)
 
@@ -122,16 +125,73 @@ def predict_satisfaction_band(ticket: TicketInput) -> SatisfactionResponse:
     return SatisfactionResponse(predicted_satisfaction_band=str(band))
 
 
-from src.agent_triage import AgentTriageResult, run_agent_triage
+from src.agent_triage import run_agent_triage
 
 
-@app.post("/triage_agent", response_model=AgentTriageResult)
-def triage_agent_endpoint(ticket: TicketInput) -> AgentTriageResult:
-    """Autonomous agentic triage: evaluates frustration, root cause, escalation and drafted response."""
+class TwoTierTriageResponse(BaseModel):
+    ticket_id: Optional[str] = None
+    tier1_priority: str
+    tier1_confidence: float
+    tier1_resolution_hours: float
+    escalate_to_tier2: bool
+    escalation_trigger: Optional[str] = None
+    customer_frustration_score: Optional[int] = None
+    root_cause_category: Optional[str] = None
+    urgency_reasoning: Optional[str] = None
+    recommended_action: Optional[str] = None
+    auto_drafted_response: Optional[str] = None
+    triage_source: Optional[str] = None
+
+
+@app.post("/triage_agent", response_model=TwoTierTriageResponse)
+def triage_agent_endpoint(ticket: TicketInput, force: bool = False) -> TwoTierTriageResponse:
+    """Two-tier triage: Tier 1 always runs; Tier 2 (agentic diagnosis) only
+    runs when Tier 1 signals low confidence, a severe resolution estimate,
+    or a high-risk Enterprise segment -- or when force=True is passed."""
     payload = {**DEFAULT_INFERENCE_ROW, **ticket.model_dump()}
     try:
-        result = run_agent_triage(payload)
+        priority, confidence = predict_classification_with_confidence(payload)
+        resolution_hours = predict_regression(payload)
+    except FileNotFoundError as exc:
+        logger.exception("Missing model file in triage_agent_endpoint")
+        raise HTTPException(status_code=503, detail=MODEL_UNAVAILABLE_DETAIL) from exc
     except Exception as exc:
         logger.exception("Unhandled error in triage_agent_endpoint")
         raise HTTPException(status_code=500, detail=INTERNAL_ERROR_DETAIL) from exc
-    return result
+
+    trigger = should_escalate(
+        subscription_type=ticket.subscription_type,
+        issue_complexity_score=ticket.issue_complexity_score,
+        confidence=confidence,
+        resolution_hours=resolution_hours,
+    )
+    if force and trigger is None:
+        trigger = "forced"
+
+    base_fields = dict(
+        ticket_id=None,
+        tier1_priority=str(priority),
+        tier1_confidence=confidence,
+        tier1_resolution_hours=resolution_hours,
+        escalate_to_tier2=trigger is not None,
+        escalation_trigger=trigger,
+    )
+
+    if trigger is None:
+        return TwoTierTriageResponse(**base_fields)
+
+    try:
+        diagnosis = run_agent_triage(payload)
+    except Exception as exc:
+        logger.exception("Unhandled error in Tier 2 agent triage")
+        raise HTTPException(status_code=500, detail=INTERNAL_ERROR_DETAIL) from exc
+
+    return TwoTierTriageResponse(
+        **base_fields,
+        customer_frustration_score=diagnosis.customer_frustration_score,
+        root_cause_category=diagnosis.root_cause_category,
+        urgency_reasoning=diagnosis.urgency_reasoning,
+        recommended_action=diagnosis.recommended_action,
+        auto_drafted_response=diagnosis.auto_drafted_response,
+        triage_source=diagnosis.triage_source,
+    )
