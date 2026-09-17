@@ -203,6 +203,7 @@
             <button class="tab-btn active" type="button" role="tab" onclick="showTab('priority', this)">Priority Routing</button>
             <button class="tab-btn" type="button" role="tab" onclick="showTab('sla', this)">SLA Prediction</button>
             <button class="tab-btn" type="button" role="tab" onclick="showTab('satisfaction', this)">Satisfaction Risk</button>
+            <button class="tab-btn" type="button" role="tab" onclick="showTab('escalation', this)">Escalation Triage</button>
         </div>
 
         <!-- ========== PRIORITY ========== -->
@@ -346,6 +347,48 @@
                 </div>
                 <button type="submit" class="submit-btn"><span>Predict satisfaction</span><div class="spinner"></div></button>
                 <div class="result-card" id="res-satisfaction"></div>
+            </form>
+        </div>
+
+        <!-- ========== ESCALATION ========== -->
+        <div id="tab-escalation" class="tab-content">
+            <div class="model-strip">
+                <span>Two-tier triage: Tier 1 routes instantly; Tier 2 (Groq LLM) only runs when Tier 1 is uncertain</span>
+            </div>
+            <form id="form-escalation" onsubmit="handleTriage(event)">
+                <div class="section-label">Ticket</div>
+                <div class="form-group">
+                    <label for="e-desc">Issue description</label>
+                    <textarea id="e-desc" name="issue_description" required minlength="5">I am unable to access my account after entering the correct credentials.</textarea>
+                </div>
+
+                <div class="section-label">Context</div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="e-product">Product</label>
+                        <select id="e-product" name="product" data-vocab="products"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="e-category">Category</label>
+                        <select id="e-category" name="category" data-vocab="categories"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="e-sub">Subscription</label>
+                        <select id="e-sub" name="subscription_type" data-vocab="subscriptions"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="e-complexity">Issue complexity score (1-10)</label>
+                        <input type="number" id="e-complexity" name="issue_complexity_score" value="5" min="1" max="10" required>
+                    </div>
+                </div>
+
+                <div class="form-group" style="display:flex; align-items:center; gap:.5rem; margin-top:.5rem;">
+                    <input type="checkbox" id="e-force" name="force" style="width:auto;">
+                    <label for="e-force" style="margin:0;">Force Tier 2 escalation (bypass thresholds, for demo purposes)</label>
+                </div>
+
+                <button type="submit" class="submit-btn"><span>Run two-tier triage</span><div class="spinner"></div></button>
+                <div class="result-card" id="res-escalation"></div>
             </form>
         </div>
     </main>
@@ -537,6 +580,78 @@
             clearTimeout(slowNotice);
             renderResult(box, 'danger', 'Request failed', 'Could not reach the service',
                          'Check your connection and try again.');
+        } finally {
+            btn.disabled = false;
+            spinner.style.display = 'none';
+        }
+    }
+
+    async function handleTriage(e) {
+        e.preventDefault();
+        const form = e.target;
+        const btn = form.querySelector('.submit-btn');
+        const spinner = form.querySelector('.spinner');
+        const box = document.getElementById('res-escalation');
+
+        btn.disabled = true;
+        spinner.style.display = 'inline-block';
+        box.className = 'result-card';
+
+        const slowNotice = setTimeout(() => {
+            renderResult(box, 'info', 'Working', 'Waking the service…',
+                'The instance had scaled to zero and is loading model bundles. First request can take up to a minute.');
+        }, 3500);
+
+        const formData = Object.fromEntries(new FormData(form).entries());
+        const force = formData.force === 'on';
+        delete formData.force;
+        formData.issue_complexity_score = parseInt(formData.issue_complexity_score, 10);
+
+        try {
+            const response = await fetch('/triage_agent?force=' + force, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+            clearTimeout(slowNotice);
+
+            if (!response.ok) {
+                let detail = `HTTP ${response.status}`;
+                try {
+                    const err = await response.json();
+                    if (err.detail) detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+                } catch (_) { /* non-JSON error body */ }
+                renderResult(box, 'danger', 'Request failed', 'Could not triage this ticket', detail);
+                return;
+            }
+
+            const data = await response.json();
+            box.className = 'result-card show ' + (data.escalate_to_tier2 ? 'r-warning' : 'r-success');
+            box.innerHTML = '';
+
+            const mk = (cls, txt) => { const d = document.createElement('div'); d.className = cls; d.textContent = txt; return d; };
+            box.appendChild(mk('result-label', 'Tier 1'));
+            box.appendChild(mk('result-value', `${data.tier1_priority} · ${(data.tier1_confidence * 100).toFixed(0)}% confidence · ${data.tier1_resolution_hours.toFixed(1)}h est. resolution`));
+
+            if (data.escalate_to_tier2) {
+                box.appendChild(mk('result-note', `Escalated to Tier 2 — trigger: ${data.escalation_trigger}`));
+                box.appendChild(mk('result-label', 'Frustration score'));
+                box.appendChild(mk('result-value', `${data.customer_frustration_score} / 10`));
+                box.appendChild(mk('result-note', data.root_cause_category));
+                box.appendChild(mk('result-note', data.urgency_reasoning));
+                box.appendChild(mk('result-meta', `Source: ${data.triage_source}`));
+                const draft = document.createElement('div');
+                draft.className = 'result-note';
+                draft.style.whiteSpace = 'pre-wrap';
+                draft.style.marginTop = '.6rem';
+                draft.textContent = data.auto_drafted_response;
+                box.appendChild(draft);
+            } else {
+                box.appendChild(mk('result-note', 'Handled by Tier 1 — no agentic escalation needed.'));
+            }
+        } catch (err) {
+            clearTimeout(slowNotice);
+            renderResult(box, 'danger', 'Request failed', 'Could not reach the service', 'Check your connection and try again.');
         } finally {
             btn.disabled = false;
             spinner.style.display = 'none';
