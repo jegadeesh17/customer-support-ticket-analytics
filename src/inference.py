@@ -97,6 +97,21 @@ def predict_classification(user_inputs):
     return model.predict(processed)[0]
 
 
+def predict_classification_with_confidence(user_inputs):
+    """Like predict_classification, but also returns the winning class's
+    predicted probability, used by the Tier-2 escalation gate."""
+    bundle = load_model_bundle('classification_model.pkl')
+    if bundle is None:
+        raise FileNotFoundError('classification_model.pkl not found. Run: python src/train_models.py')
+    model = bundle['model']
+    processed = _prepare_features(build_inference_row(user_inputs), 'classification', model)
+    proba = model.predict_proba(processed)[0]
+    idx = int(np.argmax(proba))
+    label = model.classes_[idx]
+    confidence = float(proba[idx])
+    return label, confidence
+
+
 def predict_regression(user_inputs):
     bundle = load_model_bundle('regression_model.pkl')
     if bundle is None:
