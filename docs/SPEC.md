@@ -20,7 +20,7 @@ This platform provides:
    - **Resolution Time Regression**: Log-transformed hours to resolution
    - **Customer Satisfaction Band**: 3-class (High, Mid, Low)
 2. **Autonomous Agentic Triage Tier**:
-   - Activates conditionally when classical model confidence is low (<0.80) or when predicted resolution time is abnormally severe (>48.0 hours).
+   - Activates conditionally when classical model confidence is low (<0.67) or when predicted resolution time is abnormally severe (>185.0 hours).
    - Generates structured diagnostic JSON: customer frustration score (1-10), root cause category, empathetic response draft, and escalation routing instructions.
 
 ---
@@ -43,8 +43,8 @@ flowchart TD
     F1 --> G{Escalation Gate}
     F2 --> G
     
-    G -->|Confidence >= 0.80 & Resolution <= 48h| H[Return Instant ML Prediction < 15ms]
-    G -->|Confidence < 0.80 OR Resolution > 48h| I[Agentic Triage Engine]
+    G -->|Confidence >= 0.67 & Resolution <= 185h| H[Return Instant ML Prediction < 15ms]
+    G -->|Confidence < 0.67 OR Resolution > 185h| I[Agentic Triage Engine]
     
     subgraph Autonomous Escalation Tier
         I --> J[Structured LLM Prompting via OpenRouter/OpenAI]
