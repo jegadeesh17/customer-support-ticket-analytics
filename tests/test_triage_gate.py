@@ -16,7 +16,7 @@ def test_low_confidence_triggers_escalation():
 
 
 def test_severe_resolution_triggers_escalation():
-    result = should_escalate(subscription_type="Basic", issue_complexity_score=3, confidence=0.95, resolution_hours=72.0)
+    result = should_escalate(subscription_type="Basic", issue_complexity_score=3, confidence=0.95, resolution_hours=200.0)
     assert result == "severe_resolution"
 
 
@@ -31,10 +31,10 @@ def test_routine_ticket_does_not_escalate():
 
 
 def test_confidence_exactly_at_threshold_does_not_escalate():
-    result = should_escalate(subscription_type="Basic", issue_complexity_score=3, confidence=0.80, resolution_hours=5.0)
+    result = should_escalate(subscription_type="Basic", issue_complexity_score=3, confidence=0.67, resolution_hours=5.0)
     assert result is None
 
 
 def test_resolution_exactly_at_threshold_does_not_escalate():
-    result = should_escalate(subscription_type="Basic", issue_complexity_score=3, confidence=0.95, resolution_hours=48.0)
+    result = should_escalate(subscription_type="Basic", issue_complexity_score=3, confidence=0.95, resolution_hours=185.0)
     assert result is None

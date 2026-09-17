@@ -186,7 +186,7 @@ def test_two_tier_triage_low_confidence_escalates():
 
 def test_two_tier_triage_severe_resolution_escalates():
     with patch("api.main.predict_classification_with_confidence", return_value=("Medium", 0.95)):
-        with patch("api.main.predict_regression", return_value=72.0):
+        with patch("api.main.predict_regression", return_value=200.0):
             from api.main import app
             client = TestClient(app)
             response = client.post("/triage_agent", json={

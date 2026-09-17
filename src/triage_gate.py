@@ -7,8 +7,15 @@ from __future__ import annotations
 
 from typing import Optional
 
-CONFIDENCE_THRESHOLD = 0.80
-RESOLUTION_HOURS_THRESHOLD = 48.0
+# Recalibrated against data/customer_support_ticket_sample.csv (2026-09-17):
+# the original fixed 0.80/48.0 values were never checked against this
+# dataset's real distribution and fired on the majority of tickets, not a
+# minority. These are now percentile-derived: flag the least-confident ~15%
+# of Tier-1 predictions (P15 of confidence) and the longest-predicted ~15%
+# of resolution estimates (P85 of resolution hours), measured on a
+# 500-ticket sample of real data run through the real trained models.
+CONFIDENCE_THRESHOLD = 0.67
+RESOLUTION_HOURS_THRESHOLD = 185.0
 HIGH_RISK_COMPLEXITY_THRESHOLD = 8
 
 

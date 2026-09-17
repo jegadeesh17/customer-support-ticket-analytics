@@ -116,8 +116,8 @@ In support ticket analytics, post-creation attributes routinely contaminate trai
 
 ### 5.1 Trigger Conditions
 The agentic escalation tier is invoked either explicitly via POST /triage_agent or when downstream rules detect an edge case:
-1. **Uncertain Priority**: Classifier max class probability < 0.80.
-2. **Critical Outlier**: Regression resolution hours > 48.0 hrs.
+1. **Uncertain Priority**: Classifier max class probability < 0.67 (P15 of Tier-1 confidence on real ticket data).
+2. **Critical Outlier**: Regression resolution hours > 185.0 hrs (P85 of Tier-1 resolution estimates on real ticket data).
 3. **High-Risk Segment**: Enterprise subscription with complexity score > 8.
 
 ### 5.2 Structured Output Contract
