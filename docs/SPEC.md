@@ -107,7 +107,7 @@ In support ticket analytics, post-creation attributes routinely contaminate trai
 | **p95 Latency** | <= 25 ms | <= 2,200 ms |
 | **p99 Latency** | <= 40 ms | <= 3,500 ms |
 | **Throughput Target**| >= 250 req/sec (single worker) | >= 15 req/sec (concurrent LLM tasks) |
-| **Max Cost Per Ticket** | $0.0000 (Local CPU) | <= $0.0012 (Quantized / Cost-efficient LLM) |
+| **Max Cost Per Ticket** | $0 (Local CPU) | <= $0.0012 (design target for a cost-efficient LLM; not measured; the dollar figures were reconstructed from escape damage in the original text) |
 | **Timeout Budget** | 100 ms | 5,000 ms (fallback to heuristic rules) |
 
 ---

@@ -182,7 +182,7 @@ Latency (local, not production): `scripts/benchmark_inference.py` on a warm Wind
 
 - [docs/README.md](docs/README.md): index of all documents
 - [docs/DECISIONS.md](docs/DECISIONS.md): architecture decision records
-- [CHANGELOG.md](CHANGELOG.md): changes since the first commit
+- [CHANGELOG.md](CHANGELOG.md): notable `feat:` and `fix:` changes (earlier commits without those prefixes are not listed)
 - [docs/SPEC.md](docs/SPEC.md): technical specification
 - [docs/DEPLOY.md](docs/DEPLOY.md) and [docs/DEMO.md](docs/DEMO.md): deployment and demo walkthroughs
 

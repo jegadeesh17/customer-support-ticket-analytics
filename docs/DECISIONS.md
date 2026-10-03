@@ -47,7 +47,7 @@ Rationale here is taken only from recorded sources (code comments, commit messag
 **Context:** `GROQ_MODEL` needs a default.
 **Decision:** The default is `llama-3.3-70b-versatile` (`configs/settings.py`).
 **Alternatives rejected:** None recorded.
-**Consequences:** UNVERIFIED: a sibling project (SuperKalam) moved off a llama model on Groq in its commit `db271f3`, which suggests this default may be retired. If it is, every Tier 2 call fails and silently falls back to heuristics (ADR-03). This repo contains no test that calls Groq.
+**Consequences:** UNVERIFIED: in the sibling repo SuperKalamProject, commit `db271f3` records that `llama-3.3-70b-versatile` was retired from Groq's catalog (a 404 was confirmed there), so this default may be retired for this repo too; that has not been checked against this repo's live service. If it is, every Tier 2 call fails and silently falls back to heuristics (ADR-03). This repo contains no test that calls Groq.
 
 ---
 
