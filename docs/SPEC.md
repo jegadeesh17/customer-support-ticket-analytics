@@ -20,16 +20,16 @@ This platform provides:
    - **Resolution Time Regression**: Log-transformed hours to resolution
    - **Customer Satisfaction Band**: 3-class (High, Mid, Low)
 2. **Autonomous Agentic Triage Tier**:
-   - Activates conditionally when classical model confidence is low (<0.67) or when predicted resolution time is abnormally severe (>185.0 hours).
+   - Activates conditionally when classical model confidence is low (<0.67), when predicted resolution time is abnormally severe (>185.0 hours), when an Enterprise ticket has complexity score > 8, or when `force=true` is passed to `/triage_agent`.
    - Generates structured diagnostic JSON: customer frustration score (1-10), root cause category, empathetic response draft, and escalation routing instructions.
 
 ---
 
 ## 2. System Architecture
 
-`mermaid
+```mermaid
 flowchart TD
-    A[Incoming Support Ticket Payload] --> B[FastAPI Gateway /predict_* /triage_agent]
+    A[Incoming Support Ticket Payload] --> B["FastAPI Gateway: /predict_* and /triage_agent"]
     B --> C{Pydantic Schema Validation}
     C -->|Invalid| D[422 Unprocessable Entity]
     C -->|Valid| E[Preprocessing & ColumnTransformer]
@@ -43,17 +43,17 @@ flowchart TD
     F1 --> G{Escalation Gate}
     F2 --> G
     
-    G -->|Confidence >= 0.67 & Resolution <= 185h| H[Return Instant ML Prediction < 15ms]
-    G -->|Confidence < 0.67 OR Resolution > 185h| I[Agentic Triage Engine]
+    G -->|"No trigger fired"| H[Return Tier-1 ML Prediction]
+    G -->|"Confidence < 0.67, Resolution > 185h, Enterprise with complexity > 8, or force=true"| I[Agentic Triage Engine]
     
     subgraph Autonomous Escalation Tier
-        I --> J[Structured LLM Prompting via Groq (primary) / OpenRouter / OpenAI]
+        I --> J["Structured LLM prompting via Groq, then OpenRouter, then OpenAI; heuristic fallback"]
         J --> K[Pydantic JSON Contract Validation]
         K --> L[AgentTriageResult: Frustration Score, Root Cause, Auto-Draft, Action]
     end
     
     L --> M[Enriched Response Payload with Human-in-the-Loop Handoff]
-`
+```
 
 ---
 
@@ -64,12 +64,12 @@ In support ticket analytics, post-creation attributes routinely contaminate trai
 
 | Column Name | Category | Production Policy |
 | :--- | :--- | :--- |
-| esolution_notes | Post-Resolution | **Strictly Excluded** (Future text leak) |
-| 	icket_resolved_date | Post-Resolution | **Strictly Excluded** (Direct duration target leak) |
-| status | Lifecycle | **Strictly Excluded** (Indicates completion) |
-| customer_satisfaction_score | Post-Resolution | **Strictly Excluded** from priority/resolution |
-| esolution_time_hours | Target Variable | **Strictly Excluded** from feature transformers |
-| escalated / sla_breached | Post-Triage | **Excluded at ticket creation** |
+| `resolution_notes` | Post-Resolution | **Strictly Excluded** (Future text leak) |
+| `ticket_resolved_date` | Post-Resolution | **Strictly Excluded** (Direct duration target leak) |
+| `status` | Lifecycle | **Strictly Excluded** (Indicates completion) |
+| `customer_satisfaction_score` | Post-Resolution | **Strictly Excluded** from priority/resolution |
+| `resolution_time_hours` | Target Variable | **Strictly Excluded** from feature transformers |
+| `escalated` / `sla_breached` | Post-Triage | Excluded from priority/resolution. **Kept as features by the satisfaction model** (`src/preprocessor.py:22`), as is `first_response_time_hours`; the engineered satisfaction label is derived from `first_response_time_hours`, `issue_complexity_score`, `previous_tickets` and `sla_breached` (`src/label_engineering.py:74-92`). See README Known limitations. |
 
 ### 3.2 Imputation & Unknown Encoding Safety
 - **Categoricals**: OneHotEncoder(handle_unknown='ignore') maps previously unseen products, channels, or regions to zero-vectors rather than crashing runtime inference.
@@ -107,7 +107,7 @@ In support ticket analytics, post-creation attributes routinely contaminate trai
 | **p95 Latency** | <= 25 ms | <= 2,200 ms |
 | **p99 Latency** | <= 40 ms | <= 3,500 ms |
 | **Throughput Target**| >= 250 req/sec (single worker) | >= 15 req/sec (concurrent LLM tasks) |
-| **Max Cost Per Ticket** | .0000 (Local CPU) | <= .0012 (Quantized / Cost-efficient LLM) |
+| **Max Cost Per Ticket** | $0.0000 (Local CPU) | <= $0.0012 (Quantized / Cost-efficient LLM) |
 | **Timeout Budget** | 100 ms | 5,000 ms (fallback to heuristic rules) |
 
 ---
@@ -124,23 +124,23 @@ The agentic escalation tier is invoked automatically whenever the Tier-1 gate be
 The `/triage_agent` endpoint returns a `TwoTierTriageResponse` (see `api/main.py`), which
 always carries the Tier-1 prediction and gate decision, plus Tier-2 diagnostic fields that
 are populated only when Tier 2 actually ran:
-`json
+```json
 {
-  ticket_id: string,
-  tier1_priority: "High",
-  tier1_confidence: 0.58,
-  tier1_resolution_hours: 210.5,
-  escalate_to_tier2: true,
-  escalation_trigger: "severe_resolution",
-  tier2_recommends_escalation: true,
-  customer_frustration_score: 8,
-  root_cause_category: Database Connectivity Timeout,
-  urgency_reasoning: Enterprise customer experiencing production outage with high tenure.,
-  recommended_action: Route immediately to Database SRE on-call.,
-  auto_drafted_response: Dear Alex, we have flagged this as critical and our core engineering team is actively investigating...,
-  triage_source: "agent_llm"
+  "ticket_id": null,
+  "tier1_priority": "High",
+  "tier1_confidence": 0.58,
+  "tier1_resolution_hours": 210.5,
+  "escalate_to_tier2": true,
+  "escalation_trigger": "severe_resolution",
+  "tier2_recommends_escalation": true,
+  "customer_frustration_score": 8,
+  "root_cause_category": "Database Connectivity Timeout",
+  "urgency_reasoning": "Enterprise customer experiencing production outage with high tenure.",
+  "recommended_action": "Route immediately to Database SRE on-call.",
+  "auto_drafted_response": "Dear Alex, we have flagged this as critical and our core engineering team is actively investigating...",
+  "triage_source": "agent_llm"
 }
-`
+```
 `escalate_to_tier2` reflects the *gate's* decision (whether Tier 2 ran at all).
 `tier2_recommends_escalation` reflects Tier 2's own opinion (from `AgentTriageResult.escalate_to_tier2`)
 and is `null` whenever Tier 2 did not run (the fast, non-escalated path).
@@ -151,19 +151,19 @@ and is `null` whenever Tier 2 did not run (the fast, non-escalated path).
 
 | Failure Mode | Impact | Mitigation Strategy |
 | :--- | :--- | :--- |
-| **Model Bundle Unpickling Error** | Service startup failure | Dynamic version compatibility shims for Cython loss functions. |
-| **LLM Gateway Timeout / Outage** | Triage latency spike | Circuit breaker with deterministic keyword-based heuristics fallback within 50ms. |
-| **Missing Input Features** | Inference ValueError | uild_inference_row automatically hydrates dataset medians and empty text fallbacks. |
-| **PostgreSQL Connection Drops** | Historical retrieval failure | Graceful degradation to CSV cold cache without failing healthcheck. |
+| **Model Bundle Unpickling Error** | Prediction failure (HTTP 500; HTTP 503 when a bundle file is missing) | Compatibility alias for `sklearn._loss._loss` registered at import time (`src/inference.py:8-9`). |
+| **LLM Gateway Timeout / Outage** | Triage latency spike | 5 s request timeout; any LLM error (or no provider configured) falls back to deterministic keyword-based heuristics (`src/agent_triage.py`). There is no circuit breaker and Tier 2 is not retried. |
+| **Missing Input Features** | Inference ValueError | `build_inference_row` automatically hydrates dataset medians and empty text fallbacks. |
+| **PostgreSQL Connection Drops** | Training / data-loading failure only; the API does not use PostgreSQL | `load_tickets()` falls back to the local CSV (`src/data_loader.py`). The API serves from model bundles and never queries the database. |
 
 ---
 
 ## 7. Containerization & Security Specifications
 
 - **Base Image**: python:3.11-slim with multi-stage build.
-- **Least Privilege Execution**: Non-root ppuser (UID 10001, GID 10001).
-- **Health Probes**: GET /health responding within 200ms with model presence status.
+- **Least Privilege Execution**: Non-root `appuser` (UID 10001, GID 10001).
+- **Health Probes**: `GET /health` returns model-file presence flags; the Dockerfile `HEALTHCHECK` uses a 5 s timeout.
 - **Port Allocations**:
   - FastAPI Service: 8002
-  - Streamlit Multi-Page UI: 8502
+  - Streamlit Multi-Page UI: 8501 (Streamlit default; no port is configured in `.streamlit/config.toml`)
   - PostgreSQL Storage: 5432

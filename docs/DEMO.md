@@ -3,7 +3,7 @@
 ## Setup
 ```powershell
 cd CustomerSupportAnalytics
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 python src/train_models.py
 python scripts/export_evaluation.py
 streamlit run app/app.py

@@ -4,7 +4,7 @@
 
 | File | Purpose |
 |------|---------|
-| `customer_support_ticket_sample.csv` | ~2K-row sample for notebooks, training smoke tests, and Streamlit |
+| `customer_support_ticket_sample.csv` | 5,000-row sample for notebooks, training smoke tests, and Streamlit |
 
 ## Full dataset (local only)
 

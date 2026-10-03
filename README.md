@@ -1,185 +1,191 @@
-# Customer Support Tickets Analytics — Support Ops Intelligence
----
-### **Project Overview**
-Machine learning platform for customer support ticket analysis. The project covers three tasks aligned with the course requirements:
+# Customer Support Analytics — Support Ops Intelligence
 
-1. **Priority Classification** — Multi-class prediction of ticket priority (Urgent, High, Medium, Low) using TF-IDF text features and tabular metadata with traditional ML and neural network (MLP) models.
-2. **Resolution Time Regression** — Predict resolution time in hours with leakage-safe features, log-transformed target, and neural network comparison.
-3. **Customer Satisfaction** — Classify satisfaction into Low / Mid / High bands from ticket and service attributes.
+Machine learning platform that predicts support-ticket priority, resolution time and customer satisfaction, and routes risky tickets to an LLM-based second tier.
 
-Data is stored in PostgreSQL; Jupyter notebooks in `notebooks/` follow the standard 10-step ML process; production training and inference live in `src/`.
+Live demo: https://support-ops-api-242711953247.asia-south1.run.app/app
 
-**Repository:** [github.com/jegadeesh17/customer-support-ticket-analytics](https://github.com/jegadeesh17/customer-support-ticket-analytics)  
-**Full specification:** [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md)
+Repository: https://github.com/jegadeesh17/customer-support-ticket-analytics
 
----
-### **Key Features**
-- PostgreSQL data warehouse integration
-- TF-IDF NLP on `issue_description` combined with structured ticket features
-- Class imbalance handling via `class_weight='balanced'`
-- Multi-model comparison (Logistic Regression, Random Forest, Gradient Boosting, MLP)
-- EDA generation supported via `python src/generate_eda.py`
-- Multi-page Streamlit dashboard with sample-ticket loading
+## Features
 
----
-### **Dataset**
-- **Source:** `data/customer_support_ticket.csv` (~200,000 rows, 30 columns)
-- **In repo:** `data/customer_support_ticket_sample.csv` for clone-friendly demos
-- **Full data:** Place `customer_support_ticket.csv` in `data/` for training — see [data/DATA_SETUP.md](data/DATA_SETUP.md)
-- **Key fields:** product, category, issue_description, priority, channel, region, subscription_type, resolution_time_hours, customer_satisfaction_score, SLA flags, and customer metadata
+- **Priority classification:** multi-class (Urgent, High, Medium, Low) using TF-IDF on `issue_description` plus structured ticket features. Models compared: Logistic Regression, Random Forest, Gradient Boosting and an MLP; class imbalance handled with `class_weight='balanced'` where supported.
+- **Resolution time regression:** hours to resolution with leakage columns dropped and a log-transformed target.
+- **Customer satisfaction:** Low / Mid / High band from ticket and service attributes.
+- **Two-tier triage:** Tier 1 (the sklearn models above) always runs. A rule-based gate sends a ticket to Tier 2 (LLM diagnosis returning a frustration score, root cause, recommended action and a drafted reply) when any of these holds:
+  - Tier-1 confidence is below 0.67;
+  - predicted resolution is above 185 hours;
+  - the subscription is Enterprise and complexity is above 8;
+  - the caller passes `force=true` to `POST /triage_agent`.
 
----
-### **Project Structure**
-```
-CustomerSupportAnalytics/
-├── app/                  # Streamlit application
-│   ├── app.py
-│   └── pages/
-├── data/                 # Raw CSV / Excel
-├── docs/                 # Project docs and EDA plots
-├── models/               # Saved .pkl model bundles
-├── notebooks/            # 10-step Jupyter notebooks
-├── src/                  # Training, EDA, DB, inference
-├── requirements.txt      # Streamlit runtime deps only
-├── requirements-dev.txt  # + training, notebooks, DB, tests
-├── .env                  # Database credentials (not committed)
-└── README.md
-```
+  Tier 1 handled 69.5% of 1,000 sampled tickets without escalation (`reports/ESCALATION_GATE_BENCHMARK.md`).
+- **LLM provider chain:** Groq, then OpenRouter, then OpenAI (first configured key wins). On any error, or with no key, Tier 2 falls back to deterministic heuristics (`triage_source: "heuristic_fallback"`).
+- **Interfaces:** FastAPI service with a browser UI at `/app` (tabs: Priority Routing, SLA Prediction, Satisfaction Risk, Escalation Triage) and a three-page Streamlit dashboard.
+- **Data:** PostgreSQL is used only by training and data loading (`src/load_data_to_db.py`, `src/data_loader.py`); the API does not use it. EDA plots come from `python src/generate_eda.py`.
 
----
-### **How It Works**
-1. Load CSV into PostgreSQL: `python src/load_data_to_db.py`
-2. Generate EDA plots: `python src/generate_eda.py`
-3. Train models: `python src/train_models.py`
-4. Explore workflows in `notebooks/` (same logic as `src/`)
-5. Launch Streamlit: `streamlit run app/app.py`
+## Quick start
 
-Inference builds a full feature row from user inputs plus defaults so sklearn pipelines receive the same schema as training.
+Prerequisites: Python 3.11 (CI and the Docker image use 3.11; see Known limitations for 3.13).
 
-**Note:** The bundled CSV has weak label signal in raw columns. Training uses rule-based label engineering (`src/label_engineering.py`) so models learn meaningful patterns from text urgency, complexity, and service metrics — suitable for end-to-end pipeline demonstration.
-
-### Data Caveats and Mitigation
-- This project is built as an **applied pipeline demonstration** where targets are engineered from business-style heuristics.
-- Priority, resolution hours, and satisfaction labels are derived using deterministic rules plus controlled noise in `src/label_engineering.py`.
-- Because targets are engineered, very high scores can occur when model features strongly align with generation rules.
-- To avoid over-claiming, treat reported metrics as **pipeline validity indicators**, not production KPI guarantees from human-labeled ground truth.
-
-### Leakage Defense Notes
-- Regression training intentionally drops direct leakage columns (`resolution_time_hours`, `ticket_id`) and only keeps usable predictors.
-- Inference path builds full feature schema consistently so train/serve mismatch is minimized.
-- Remaining caveat: some engineered targets and feature inputs share related signals by design; this is disclosed and should be discussed transparently in interviews.
-
----
-### **Model Performance**
-Run `python src/train_models.py` to print current metrics. Targets from the project brief:
-
-| Task | Target |
-|------|--------|
-| Priority classification | ≥ 80% accuracy |
-| Resolution time regression | R² ≥ 0.70 |
-| Satisfaction classification | ≥ 75% accuracy |
-
-Interpretation guidance:
-- If observed metrics are near-perfect, validate against caveat notes above before claiming real-world generalization.
-- Prefer reporting this project as an end-to-end ML system design and modeling workflow demonstration.
-
----
-### **Interactive Application Deployment**
-```bash
-streamlit run app/app.py
-uvicorn api.main:app --port 8002
-```
-Use **Load sample ticket** on each page to populate the form from the dataset, then submit to get predictions.
-
-**Evaluation report:** `reports/evaluation.md` (generated after training)
-
-#### **Sample Input / Output**
-- Input ticket: "Payment failed twice after renewal, account locked, need urgent access."
-- Typical output:
-  - Priority page -> `High/Urgent`
-  - Regression page -> predicted resolution hours
-  - Satisfaction page -> risk band (`Low/Mid/High`)
-
-#### **Metrics + Limitations Block**
-- Targets: Priority >=0.80 acc, Regression R2 >=0.70, Satisfaction >=0.75 acc
-- Strength: end-to-end multi-task ML pipeline with DB + UI integration
-- Limitation: labels are engineered (not human-annotated ground truth), so near-perfect metrics should be interpreted cautiously
-
----
-### **Technology Stack**
-- Python, pandas, scikit-learn, SQLAlchemy, PostgreSQL
-- Streamlit, matplotlib, seaborn, joblib
-- Jupyter notebooks
-
----
-### **Getting Started**
-### **1. Clone Repository**
 ```bash
 git clone https://github.com/jegadeesh17/customer-support-ticket-analytics.git
 cd customer-support-ticket-analytics
+python -m venv .venv
+source .venv/Scripts/activate          # Windows Git Bash; on Linux/macOS: source .venv/bin/activate
+pip install -r requirements-dev.txt    # training, notebooks, DB, API, tests
 ```
 
-### **2. Install Dependencies**
+Model files (`.pkl`) are not in git. Either train them or download them:
+
+- Train: put `customer_support_ticket.csv` in `data/` (see [data/DATA_SETUP.md](data/DATA_SETUP.md); without it training uses the 5,000-row sample), then run `python src/train_models.py`.
+- Download: set `HF_MODEL_REPO` to a Hugging Face repo that holds the three bundles; they are fetched into `models/` on first use.
+
+Run the services:
+
 ```bash
-pip install -r requirements-dev.txt   # training, notebooks, DB, tests
+uvicorn api.main:app --port 8002       # API and UI at http://localhost:8002/app
+streamlit run app/app.py               # dashboard at http://localhost:8501 (Streamlit default port)
 ```
 
-`requirements.txt` holds only what the Streamlit app needs at runtime (it is what
-Streamlit Cloud installs); `requirements-dev.txt` includes it and adds the rest.
+## Usage
 
-### **3. Configure Database**
-Create `.env` in the project root:
-```
-DB_HOST=localhost
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_NAME=customer_support_ticket
-DB_PORT=5432
-```
+Endpoints (`api/main.py`):
 
-### **4. Load Data & Train**
+| Method and path | Purpose |
+|---|---|
+| `GET /health` | Service status and whether each model file is present |
+| `GET /app` | Browser UI |
+| `POST /predict_priority` | Priority class |
+| `POST /predict_resolution_hours` | Predicted resolution hours |
+| `POST /predict_satisfaction` | Satisfaction band |
+| `POST /triage_agent?force=false` | Two-tier triage; `force=true` always runs Tier 2 |
+
+Only `issue_description` (at least 5 characters) is required; other `TicketInput` fields have defaults.
+
 ```bash
-python src/load_data_to_db.py
-python src/generate_eda.py
-python src/train_models.py
+curl -X POST http://localhost:8002/predict_priority \
+  -H "Content-Type: application/json" \
+  -d '{"issue_description": "Payment failed twice after renewal, account locked."}'
 ```
-Model files (`.pkl`) are generated locally and excluded from git due to size. Run `train_models.py` after cloning.
 
-### **5. Launch Dashboard**
+Output from a local run:
+
+```json
+{"predicted_priority":"Urgent"}
+```
+
+`POST /triage_agent` with the same body (local run; the gate did not fire, so the Tier-2 fields are null):
+
+```json
+{"ticket_id":null,"tier1_priority":"Urgent","tier1_confidence":0.9613453363641192,"tier1_resolution_hours":158.76311640301444,"escalate_to_tier2":false,"escalation_trigger":null,"tier2_recommends_escalation":null,"customer_frustration_score":null,"root_cause_category":null,"urgency_reasoning":null,"recommended_action":null,"auto_drafted_response":null,"triage_source":null}
+```
+
+When Tier 2 runs, `escalation_trigger` is one of `low_confidence`, `severe_resolution`, `high_risk_segment` or `forced`, and the Tier-2 fields are populated. `escalate_to_tier2` is the gate's decision; `tier2_recommends_escalation` is the LLM's own opinion.
+
+## Running tests
+
 ```bash
-streamlit run app/app.py
+.venv/Scripts/python -m pytest -q                  # full suite
+.venv/Scripts/python -m pytest tests/test_triage_gate.py -q   # one file
 ```
 
----
-### **Example Use Case**
-A support agent enters a ticket description and channel. The **Priority** page predicts urgency for routing; the **Regression** page estimates SLA hours; the **Satisfaction** page flags at-risk customers for proactive follow-up.
+36 tests collected and passing as of 2026-10-03 (`pytest -q` on Python 3.11, 1 deprecation warning from starlette). CI runs the same command (`.github/workflows/ci.yml`).
 
----
-### **Future Improvements**
-- BERT / LSTM text models for priority classification
-- SHAP explanations in the Streamlit UI
-- Batch prediction and export
+## Configuration
 
----
+Copy `.env.example` to `.env`. Variables are read by `configs/settings.py`; all are optional.
 
-### **Cloud Deployment (Free Tier)**
+| Variable | Purpose | Default |
+|---|---|---|
+| `DATABASE_URL` | Full Postgres URL (Neon, Supabase); overrides the `DB_*` variables | unset |
+| `DB_HOST` | Postgres host | `localhost` |
+| `DB_USER` | Postgres user | `postgres` |
+| `DB_PASSWORD` | Postgres password (secret) | `postgres` |
+| `DB_NAME` | Postgres database | `customer_support_ticket` |
+| `DB_PORT` | Postgres port | `5432` |
+| `DB_SSLMODE` | Postgres SSL mode | empty |
+| `GROQ_API_KEY` | Groq key, primary Tier-2 provider (secret) | unset |
+| `GROQ_MODEL` | Groq model for Tier 2 | `llama-3.3-70b-versatile` |
+| `OPENROUTER_API_KEY` | OpenRouter key, used if no Groq key (secret) | unset |
+| `OPENAI_API_KEY` | OpenAI key, used if neither of the above is set (secret) | unset |
+| `HF_MODEL_REPO` | Hugging Face repo holding the model bundles | unset |
 
-Deploy the dashboard, API, and database at zero cost using Streamlit Cloud, Hugging Face Hub, Neon Postgres, and GCP Cloud Run.
+`.env.example` also lists `API_BASE_URL`, which no code in this repo reads.
 
-**Full guide:** [docs/DEPLOY.md](docs/DEPLOY.md)  
-**Master walkthrough (both projects):** [../DEPLOY_GUIDE.md](../DEPLOY_GUIDE.md)
+## Project structure
 
-Quick summary:
+```
+CustomerSupportAnalytics/
+├── .github/workflows/   # ci.yml (tests), deploy.yml (Cloud Run)
+├── .streamlit/          # Streamlit theme
+├── api/                 # FastAPI app and the /app browser UI
+├── app/                 # Streamlit dashboard (app.py, pages/)
+├── configs/             # pydantic-settings configuration
+├── data/                # sample CSV and DATA_SETUP.md
+├── docs/                # specs, deploy guide, decisions, EDA plots
+├── models/              # .pkl bundles (not tracked)
+├── notebooks/           # 10-step Jupyter notebooks
+├── reports/             # evaluation and escalation-gate benchmark
+├── scripts/             # benchmarks, evaluation export, Hugging Face upload
+├── src/                 # training, inference, triage gate, agent, DB
+├── tests/               # pytest suite
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt         # Streamlit runtime set
+├── requirements-api.txt     # API image set
+└── requirements-dev.txt     # training, notebooks, DB, tests
+```
 
-1. `python scripts/upload_models_to_hf.py --repo-id YOUR_USERNAME/support-ops-models`
-2. Neon Postgres → set `DATABASE_URL` (optional; sample CSV works without DB)
-3. Streamlit Cloud → `app/app.py` with `HF_MODEL_REPO` secret
-4. GitHub Actions → **Deploy API to Cloud Run**
+## Architecture
 
----
-### **Contributors**
-- jegadeesh17
+```
+ticket -> FastAPI -> Tier 1: priority + resolution models (+ satisfaction on its own endpoint)
+                      -> escalation gate (src/triage_gate.py)
+                           no trigger -> return Tier-1 result
+                           trigger or force=true -> Tier 2 (src/agent_triage.py)
+                                Groq -> OpenRouter -> OpenAI, 5 s timeout, heuristic fallback
+```
 
----
-### **License**
-MIT (or as required by your institution)
+Inference builds a full feature row from the user inputs plus defaults so the sklearn pipelines receive the same schema as training. The Docker image (`Dockerfile`) contains `api/`, `src/`, `configs/` and the sample CSV only, with an empty `models/`; Cloud Run downloads the bundles from Hugging Face at runtime. The Streamlit app is not part of that image. Full detail: [docs/SPEC.md](docs/SPEC.md) and [docs/DECISIONS.md](docs/DECISIONS.md).
+
+Deployment: `.github/workflows/deploy.yml` builds the image and deploys Cloud Run service `support-ops-api` in `asia-south1` on every push to `main` and on manual dispatch. See [docs/DEPLOY.md](docs/DEPLOY.md).
+
+## Evaluation
+
+Training samples at most 30,000 rows per task (`TRAIN_SAMPLE` in `src/train_models.py`) and uses an 80/20 split. Metrics from `reports/evaluation.md` (generated by `scripts/export_evaluation.py`):
+
+| Task | Model | Result | Brief target |
+|---|---|---|---|
+| Priority classification | Gradient Boosting | accuracy 0.821 | >= 0.80 |
+| Resolution regression | Random Forest | R2 0.7185 | >= 0.70 |
+| Satisfaction classification | Random Forest | accuracy 0.9307 | >= 0.75 |
+
+These are pipeline-validity indicators, not production KPIs, because the labels are engineered (see Known limitations).
+
+Escalation gate: `reports/ESCALATION_GATE_BENCHMARK.md` reports 69.5% of 1,000 tickets handled by Tier 1 (147 `low_confidence`, 140 `severe_resolution`, 18 `high_risk_segment`). The sample uses a different random seed (7) from the one that derived the thresholds (42), but both come from the same CSV.
+
+Latency (local, not production): `scripts/benchmark_inference.py` on a warm Windows laptop process, 200 iterations per model, measured median about 24 ms for classification, about 50 ms for regression and about 50 ms for satisfaction (p95 about 43, 78 and 86 ms). These exclude request overhead and were not measured on Cloud Run; see `docs/SPEC.md` section 4. The Tier-2 latency is not benchmarked.
+
+## Known limitations
+
+- **Engineered labels.** The bundled CSV has weak label signal, so priority, resolution hours and satisfaction labels are derived by deterministic rules plus noise (`src/label_engineering.py`). Metrics are not human-labeled ground truth, and very high scores are expected when features align with the generation rules.
+- **Satisfaction-model leakage.** The satisfaction label is derived from `first_response_time_hours`, `issue_complexity_score`, `previous_tickets` and `sla_breached` (`src/label_engineering.py:74-92`), and the satisfaction model keeps `first_response_time_hours`, `escalated` and `sla_breached` as input features (`src/preprocessor.py:22`). The 0.9307 accuracy partly measures how well the model recovers the labelling rule.
+- **Regression label shares signal with features.** Regression training drops `resolution_time_hours`, `ticket_id` and `first_response_time_hours`, but the engineered resolution label (`src/label_engineering.py:51-71`) is built from a text-derived priority, `issue_complexity_score`, `previous_tickets` and description length, which the model can see as features (including `text_urgency_score` and `desc_length`).
+- **Groq model may be retired (UNVERIFIED).** The `GROQ_MODEL` default `llama-3.3-70b-versatile` may no longer be served by Groq. If so, live Tier 2 silently falls back to heuristics (`triage_source: "heuristic_fallback"`). Not verified against the live service.
+- **No Tier-2 retry and no circuit breaker.** One 5 s attempt per request, then heuristics (`src/agent_triage.py:184-194`).
+- **Streamlit is not deployed with the API.** The Cloud Run image does not include `app/`.
+- **Sample data.** The repo ships a 5,000-row sample; the full 200,000-row, 30-column dataset is local only. If the full file is present, training and the gate benchmark use it instead.
+- **`docker-compose.yml` starts Postgres for the API service,** which does not use a database; it also passes `OPENROUTER_API_KEY` but not `GROQ_API_KEY`.
+- **Python 3.13.** `pip install -r requirements-dev.txt` failed on Python 3.13 (Windows) while building `psycopg2` from source; use Python 3.11, as CI does.
+- **Deploys on every push to `main`.** There is no path filter, so documentation-only pushes redeploy.
+
+## Documentation
+
+- [docs/README.md](docs/README.md): index of all documents
+- [docs/DECISIONS.md](docs/DECISIONS.md): architecture decision records
+- [CHANGELOG.md](CHANGELOG.md): changes since the first commit
+- [docs/SPEC.md](docs/SPEC.md): technical specification
+- [docs/DEPLOY.md](docs/DEPLOY.md) and [docs/DEMO.md](docs/DEMO.md): deployment and demo walkthroughs
+
+## License
+
+MIT. See [LICENSE](LICENSE).

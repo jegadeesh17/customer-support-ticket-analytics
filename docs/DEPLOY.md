@@ -68,14 +68,16 @@ DATABASE_URL = "postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmod
 
 ## Step 4 — GCP setup for Cloud Run API
 
-Same as RiceLeafDetection — see [RiceLeafDetection/docs/DEPLOY.md](../RiceLeafDetection/docs/DEPLOY.md) Step 3, or run:
+Run:
 
 ```bash
 gcloud services enable run.googleapis.com artifactregistry.googleapis.com
 gcloud artifacts repositories create ml-apis --repository-format=docker --location=asia-south1
 ```
 
-Create the `github-deployer` service account and download `gcp-key.json` (same roles as RiceLeaf project).
+Create a service account (for example `github-deployer`) that can push to Artifact Registry and deploy to Cloud Run, and download its key as `gcp-key.json`. The required roles are not documented in this repo.
+
+`.github/workflows/deploy.yml` deploys the Cloud Run service `support-ops-api` in region `asia-south1` (1 Gi memory, 1 CPU, 0 to 2 instances, unauthenticated).
 
 ## Step 5 — GitHub secrets
 
@@ -84,10 +86,11 @@ Create the `github-deployer` service account and download `gcp-key.json` (same r
 | `GCP_PROJECT_ID` | Your GCP project ID |
 | `GCP_SA_KEY` | Contents of `gcp-key.json` |
 | `HF_MODEL_REPO` | `jegadeesh17/support-ops-models` |
+| `GROQ_API_KEY` | Groq API key for Tier 2 triage (passed to Cloud Run as an env var; without it Tier 2 uses the heuristic fallback) |
 
 ## Step 6 — Deploy API to Cloud Run
 
-1. **Actions** → **Deploy API to Cloud Run** → **Run workflow**
+1. **Actions** → **Deploy API to Cloud Run** → **Run workflow**. The workflow also runs on every push to `main`, with no path filter, so a docs-only push to `main` redeploys.
 2. Test endpoints:
 
 ```bash
@@ -110,7 +113,7 @@ curl -X POST https://YOUR-SERVICE-xxx.run.app/predict_satisfaction \
 
 ```bash
 docker build -t support-ops-api .
-docker run -p 8080:8080 -e HF_MODEL_REPO=jegadeesh17/support-ops-models support-ops-api
+docker run -p 8002:8002 -e HF_MODEL_REPO=jegadeesh17/support-ops-models support-ops-api
 ```
 
 ## Interview talking points
