@@ -28,3 +28,21 @@ models/.cache/
 *.log
 logs-*.txt
 
+
+# Secrets and env files (keep the documented template tracked)
+.env.*
+!.env.example
+
+# Keys, certificates and OS files
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+
+# Virtual environment
+.venv/
+
+# Local-only docs: archived specs, orchestrator files, internal agent notes
+docs/archive/
+docs/orchestrate/
+docs/superpowers/
