@@ -46,3 +46,16 @@ Thumbs.db
 docs/archive/
 docs/orchestrate/
 docs/superpowers/
+
+# Coverage, editor, packaging and local tool state
+.coverage
+htmlcov/
+.idea/
+.superpowers/
+.agents/
+*.egg-info/
+node_modules/
+*.tsbuildinfo
+.claude/settings.local.json
+dist/
+build/
