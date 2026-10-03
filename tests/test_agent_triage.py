@@ -13,8 +13,14 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from api.main import app
+from src.paths import get_models_dir
 from configs.settings import settings
 from src.agent_triage import AgentTriageResult, run_agent_triage
+
+requires_models = pytest.mark.skipif(
+    not os.path.exists(os.path.join(get_models_dir(), "classification_model.pkl")),
+    reason="trained model files are git-ignored and absent (CI); run python src/train_models.py",
+)
 
 
 @pytest.fixture
@@ -57,6 +63,7 @@ def test_heuristic_triage_routine_inquiry():
     assert "Billing" in result.root_cause_category
 
 
+@requires_models
 def test_api_triage_agent_endpoint(client):
     payload = {
         "issue_description": "Emergency: all payment transactions are failing with code 500.",
