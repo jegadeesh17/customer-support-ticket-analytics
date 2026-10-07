@@ -30,10 +30,15 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
 
     # src/model_assets.py
     HF_MODEL_REPO: Optional[str] = None
+
+    # api/main.py and src/agent_triage.py (in-memory, per instance)
+    TRIAGE_RATE_LIMIT_PER_MIN: int = 10
+    TRIAGE_DAILY_LLM_CALLS: int = 200
+    CORS_ALLOW_ORIGINS: str = ""
 
 
 settings = Settings()

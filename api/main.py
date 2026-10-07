@@ -5,9 +5,15 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import threading
+import time
+from collections import deque
+from contextlib import asynccontextmanager
+from typing import Deque, Dict, Optional
 
-from fastapi import FastAPI, HTTPException
-from typing import Optional
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from pydantic import BaseModel, Field
 
@@ -15,8 +21,10 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+from configs.settings import settings
 from src.constants import DEFAULT_INFERENCE_ROW
-from src.inference import predict_classification, predict_regression, predict_satisfaction, predict_classification_with_confidence
+from src.inference import load_model_bundle, predict_classification, predict_regression, predict_satisfaction, predict_classification_with_confidence
+from src import triage_gate
 from src.triage_gate import should_escalate
 
 logger = logging.getLogger(__name__)
@@ -24,11 +32,84 @@ logger = logging.getLogger(__name__)
 INTERNAL_ERROR_DETAIL = "An internal error occurred while processing the request."
 MODEL_UNAVAILABLE_DETAIL = "Service temporarily unavailable: required model file is missing."
 
+MODEL_FILES = ("classification_model.pkl", "regression_model.pkl", "satisfaction_model.pkl")
+_models_ready = threading.Event()
+
+
+def _preload_models() -> None:
+    """Unpickle all three bundles once so /health.models_ready reflects memory, not disk."""
+    try:
+        if all(load_model_bundle(name) is not None for name in MODEL_FILES):
+            _models_ready.set()
+        else:
+            logger.warning("Model preload incomplete: a model file is missing")
+    except Exception:
+        logger.exception("Model preload failed")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    threading.Thread(target=_preload_models, name="model-preload", daemon=True).start()
+    yield
+
+
 app = FastAPI(
     title="Support Ops Intelligence API",
     description="Priority and resolution-time predictions for support tickets.",
     version="1.0.0",
+    lifespan=lifespan,
 )
+
+# No cross-origin access unless CORS_ALLOW_ORIGINS lists origins (comma-separated); the UI is same-origin.
+_cors_origins = [o.strip() for o in settings.CORS_ALLOW_ORIGINS.split(",") if o.strip() and o.strip() != "*"]
+if _cors_origins:
+    app.add_middleware(CORSMiddleware, allow_origins=_cors_origins, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error("Unhandled error on %s %s", request.method, request.url.path, exc_info=exc)
+    return JSONResponse(status_code=500, content={"detail": INTERNAL_ERROR_DETAIL})
+
+
+_RATE_WINDOW_SECONDS = 60.0
+_RATE_MAX_TRACKED_CLIENTS = 10000
+_rate_lock = threading.Lock()
+_rate_hits: Dict[str, Deque[float]] = {}
+
+
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for", "")
+    first = forwarded.split(",")[0].strip()
+    if first:
+        return first
+    return request.client.host if request.client else "unknown"
+
+
+def triage_rate_limit(request: Request) -> None:
+    """In-memory, per-instance sliding-window limit per client IP (see ADR-08)."""
+    limit = settings.TRIAGE_RATE_LIMIT_PER_MIN
+    if limit <= 0:
+        return
+    now = time.monotonic()
+    ip = _client_ip(request)
+    with _rate_lock:
+        if len(_rate_hits) >= _RATE_MAX_TRACKED_CLIENTS and ip not in _rate_hits:
+            for key in [k for k, q in _rate_hits.items() if not q or now - q[-1] >= _RATE_WINDOW_SECONDS]:
+                del _rate_hits[key]
+            if len(_rate_hits) >= _RATE_MAX_TRACKED_CLIENTS:
+                _rate_hits.clear()
+        hits = _rate_hits.setdefault(ip, deque())
+        while hits and now - hits[0] >= _RATE_WINDOW_SECONDS:
+            hits.popleft()
+        if len(hits) >= limit:
+            retry_after = max(1, int(_RATE_WINDOW_SECONDS - (now - hits[0])) + 1)
+            raise HTTPException(
+                status_code=429,
+                detail="Rate limit exceeded for /triage_agent. Please wait and try again.",
+                headers={"Retry-After": str(retry_after)},
+            )
+        hits.append(now)
 
 
 class TicketInput(BaseModel):
@@ -49,6 +130,7 @@ class TicketInput(BaseModel):
 
 class PriorityResponse(BaseModel):
     predicted_priority: str
+    confidence: Optional[float] = None
 
 
 class ResolutionResponse(BaseModel):
@@ -69,6 +151,18 @@ def health() -> dict:
         "classification_model": os.path.exists(os.path.join(models_dir, "classification_model.pkl")),
         "regression_model": os.path.exists(os.path.join(models_dir, "regression_model.pkl")),
         "satisfaction_model": os.path.exists(os.path.join(models_dir, "satisfaction_model.pkl")),
+        "models_ready": _models_ready.is_set(),
+    }
+
+
+@app.get("/config")
+def get_config() -> dict:
+    """Read-only escalation thresholds, taken from src/triage_gate.py so they cannot drift."""
+    return {
+        "confidence_threshold": triage_gate.CONFIDENCE_THRESHOLD,
+        "resolution_hours_threshold": triage_gate.RESOLUTION_HOURS_THRESHOLD,
+        "high_risk_segment": triage_gate.HIGH_RISK_SEGMENT,
+        "high_risk_complexity_threshold": triage_gate.HIGH_RISK_COMPLEXITY_THRESHOLD,
     }
 
 
@@ -94,7 +188,12 @@ def predict_priority(ticket: TicketInput) -> PriorityResponse:
     except Exception as exc:
         logger.exception("Unhandled error in predict_priority")
         raise HTTPException(status_code=500, detail=INTERNAL_ERROR_DETAIL) from exc
-    return PriorityResponse(predicted_priority=str(priority))
+    confidence: Optional[float] = None
+    try:
+        _, confidence = predict_classification_with_confidence(payload)
+    except Exception:
+        logger.warning("Could not compute priority confidence", exc_info=True)
+    return PriorityResponse(predicted_priority=str(priority), confidence=confidence)
 
 
 @app.post("/predict_resolution_hours", response_model=ResolutionResponse)
@@ -144,7 +243,7 @@ class TwoTierTriageResponse(BaseModel):
     triage_source: Optional[str] = None
 
 
-@app.post("/triage_agent", response_model=TwoTierTriageResponse)
+@app.post("/triage_agent", response_model=TwoTierTriageResponse, dependencies=[Depends(triage_rate_limit)])
 def triage_agent_endpoint(ticket: TicketInput, force: bool = False) -> TwoTierTriageResponse:
     """Two-tier triage: Tier 1 always runs; Tier 2 (agentic diagnosis) only
     runs when Tier 1 signals low confidence, a severe resolution estimate,

@@ -104,7 +104,7 @@ Copy `.env.example` to `.env`. Variables are read by `configs/settings.py`; all 
 | `DB_PORT` | Postgres port | `5432` |
 | `DB_SSLMODE` | Postgres SSL mode | empty |
 | `GROQ_API_KEY` | Groq key, primary Tier-2 provider (secret) | unset |
-| `GROQ_MODEL` | Groq model for Tier 2 | `llama-3.3-70b-versatile` |
+| `GROQ_MODEL` | Groq model for Tier 2 | `openai/gpt-oss-120b` |
 | `OPENROUTER_API_KEY` | OpenRouter key, used if no Groq key (secret) | unset |
 | `OPENAI_API_KEY` | OpenAI key, used if neither of the above is set (secret) | unset |
 | `HF_MODEL_REPO` | Hugging Face repo holding the model bundles | unset |
@@ -170,7 +170,7 @@ Latency (local, not production): `scripts/benchmark_inference.py` on a warm Wind
 - **Engineered labels.** The bundled CSV has weak label signal, so priority, resolution hours and satisfaction labels are derived by deterministic rules plus noise (`src/label_engineering.py`). Metrics are not human-labeled ground truth, and very high scores are expected when features align with the generation rules.
 - **Satisfaction-model leakage.** The satisfaction label is derived from `first_response_time_hours`, `issue_complexity_score`, `previous_tickets` and `sla_breached` (`src/label_engineering.py:74-92`), and the satisfaction model keeps `first_response_time_hours`, `escalated` and `sla_breached` as input features (`src/preprocessor.py:22`). The 0.9307 accuracy partly measures how well the model recovers the labelling rule.
 - **Regression label shares signal with features.** Regression training drops `resolution_time_hours`, `ticket_id` and `first_response_time_hours`, but the engineered resolution label (`src/label_engineering.py:51-71`) is built from a text-derived priority, `issue_complexity_score`, `previous_tickets` and description length, which the model can see as features (including `text_urgency_score` and `desc_length`).
-- **Groq model may be retired (UNVERIFIED).** The `GROQ_MODEL` default `llama-3.3-70b-versatile` may no longer be served by Groq. If so, live Tier 2 silently falls back to heuristics (`triage_source: "heuristic_fallback"`). Not verified against the live service.
+- **Groq model default changed, not yet verified live.** `llama-3.3-70b-versatile` is deprecated on Groq, so the `GROQ_MODEL` default is now `openai/gpt-oss-120b` (see `docs/DECISIONS.md` ADR-05). If Groq rejects it, Tier 2 falls back to the next provider or to heuristics (`triage_source: "heuristic_fallback"`).
 - **No Tier-2 retry and no circuit breaker.** One 5 s attempt per request, then heuristics (`src/agent_triage.py:184-194`).
 - **Streamlit is not deployed with the API.** The Cloud Run image does not include `app/`.
 - **Sample data.** The repo ships a 5,000-row sample; the full 200,000-row, 30-column dataset is local only. If the full file is present, training and the gate benchmark use it instead.

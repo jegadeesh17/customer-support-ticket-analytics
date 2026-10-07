@@ -42,10 +42,12 @@ Rationale here is taken only from recorded sources (code comments, commit messag
 
 ---
 
-## ADR-05: Groq model default `llama-3.3-70b-versatile` (status UNVERIFIED)
+## ADR-05: Groq model default `openai/gpt-oss-120b` (supersedes `llama-3.3-70b-versatile`)
+
+**Update 2026-10-07:** Groq's deprecations page lists `llama-3.3-70b-versatile` as deprecated (2026-08-16) with `openai/gpt-oss-120b` as the recommended replacement, and its models page lists `openai/gpt-oss-120b` as a production model on the free developer plan. The default in `configs/settings.py` is now `openai/gpt-oss-120b`. Only the model ID changed: provider order (Groq, OpenRouter, OpenAI, heuristic), the `json_object` response format and the output schema are unchanged. Not yet verified with a live call from this repo. The text below is the original record.
 
 **Context:** `GROQ_MODEL` needs a default.
-**Decision:** The default is `llama-3.3-70b-versatile` (`configs/settings.py`).
+**Decision:** The default was `llama-3.3-70b-versatile` (`configs/settings.py`).
 **Alternatives rejected:** None recorded.
 **Consequences:** UNVERIFIED: in the sibling repo SuperKalamProject, commit `db271f3` records that `llama-3.3-70b-versatile` was retired from Groq's catalog (a 404 was confirmed there), so this default may be retired for this repo too; that has not been checked against this repo's live service. If it is, every Tier 2 call fails and silently falls back to heuristics (ADR-03). This repo contains no test that calls Groq.
 
@@ -66,3 +68,12 @@ Rationale here is taken only from recorded sources (code comments, commit messag
 **Decision:** `load_tickets` reads the `tickets` table when a database is reachable and otherwise reads the local CSV (`src/data_loader.py`). The FastAPI service never imports the database layer, so inference needs no database. Evidence: `src/data_loader.py`, `src/load_data_to_db.py`, `api/main.py` imports.
 **Alternatives rejected:** None recorded.
 **Consequences:** `docker-compose.yml` still starts a Postgres container for the API service, which the API does not use. Neon is optional (`docs/DEPLOY.md`).
+
+---
+
+## ADR-08: In-memory, per-instance rate limit and daily Tier-2 LLM budget
+
+**Context:** `POST /triage_agent` can trigger a paid LLM call and is public on Cloud Run. The project has no Redis or other shared store, and the service is a demo.
+**Decision:** `triage_rate_limit` (`api/main.py`) applies a sliding 60-second window per client IP (`TRIAGE_RATE_LIMIT_PER_MIN`, default 10; over the limit returns 429 with `detail` and `Retry-After`). The client IP is the first `X-Forwarded-For` hop when present, else the socket peer. `_consume_llm_budget` (`src/agent_triage.py`) caps Tier-2 LLM calls at `TRIAGE_DAILY_LLM_CALLS` per UTC day (default 200); when exhausted, the existing heuristic fallback runs and `urgency_reasoning` notes why. The provider chain order is unchanged.
+**Alternatives rejected:** A shared store (Redis, Firestore) or a new dependency such as slowapi: too heavy for a demo and out of scope.
+**Consequences:** Counters live in process memory. Each Cloud Run instance counts separately, and counters reset on restart or scale-out, so the effective global limit is roughly the per-instance limit times the instance count. The first `X-Forwarded-For` hop can be set by the client, so a determined caller can evade the per-IP limit; the daily budget still bounds LLM spend per instance.

@@ -17,6 +17,7 @@ from typing import Optional
 CONFIDENCE_THRESHOLD = 0.67
 RESOLUTION_HOURS_THRESHOLD = 185.0
 HIGH_RISK_COMPLEXITY_THRESHOLD = 8
+HIGH_RISK_SEGMENT = "Enterprise"
 
 
 def should_escalate(
@@ -33,6 +34,6 @@ def should_escalate(
         return "low_confidence"
     if resolution_hours > RESOLUTION_HOURS_THRESHOLD:
         return "severe_resolution"
-    if subscription_type == "Enterprise" and issue_complexity_score > HIGH_RISK_COMPLEXITY_THRESHOLD:
+    if subscription_type == HIGH_RISK_SEGMENT and issue_complexity_score > HIGH_RISK_COMPLEXITY_THRESHOLD:
         return "high_risk_segment"
     return None

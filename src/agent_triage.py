@@ -9,6 +9,8 @@ from __future__ import annotations
 import json
 import logging
 import re
+import threading
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
@@ -105,6 +107,28 @@ def _extract_heuristics(ticket: Dict[str, Any]) -> AgentTriageResult:
     )
 
 
+_budget_lock = threading.Lock()
+_budget_day: Optional[str] = None
+_budget_used = 0
+
+
+def _consume_llm_budget() -> bool:
+    """Count one Tier-2 LLM call against today's (UTC) in-memory budget.
+
+    Returns False when TRIAGE_DAILY_LLM_CALLS is exhausted. State is per
+    process and resets on a UTC day change or restart.
+    """
+    global _budget_day, _budget_used
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    with _budget_lock:
+        if _budget_day != today:
+            _budget_day, _budget_used = today, 0
+        if _budget_used >= settings.TRIAGE_DAILY_LLM_CALLS:
+            return False
+        _budget_used += 1
+        return True
+
+
 def _select_provider():
     """Pick the first configured LLM provider as (endpoint_url, api_key, model).
 
@@ -139,6 +163,12 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
         return _extract_heuristics(ticket)
 
     endpoint_url, key, model = provider
+
+    if not _consume_llm_budget():
+        logger.warning("Daily Tier-2 LLM budget exhausted; using heuristic fallback")
+        result = _extract_heuristics(ticket)
+        result.urgency_reasoning += " (Daily LLM budget exhausted; heuristic fallback used.)"
+        return result
 
     try:
         import urllib.request
