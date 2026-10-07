@@ -88,13 +88,21 @@ def test_triage_rate_limit_returns_429(client, mocked_tier1):
     assert int(response.headers["retry-after"]) >= 1
 
 
-def test_triage_rate_limit_is_per_ip_and_uses_first_forwarded_hop(client, mocked_tier1):
+def test_triage_rate_limit_is_per_ip_and_uses_last_forwarded_hop(client, mocked_tier1):
     with patch.object(settings, "TRIAGE_RATE_LIMIT_PER_MIN", 1):
-        a = {"X-Forwarded-For": "1.1.1.1, 9.9.9.9"}
-        b = {"X-Forwarded-For": "2.2.2.2, 9.9.9.9"}
+        a = {"X-Forwarded-For": "9.9.9.1"}
+        b = {"X-Forwarded-For": "9.9.9.2"}
         assert client.post("/triage_agent", json=TICKET, headers=a).status_code == 200
         assert client.post("/triage_agent", json=TICKET, headers=b).status_code == 200
         assert client.post("/triage_agent", json=TICKET, headers=a).status_code == 429
+
+
+def test_triage_rate_limit_ignores_spoofed_leading_forwarded_entries(client, mocked_tier1):
+    with patch.object(settings, "TRIAGE_RATE_LIMIT_PER_MIN", 1):
+        spoof_a = {"X-Forwarded-For": "1.1.1.1, 9.9.9.9"}
+        spoof_b = {"X-Forwarded-For": "2.2.2.2, 9.9.9.9"}
+        assert client.post("/triage_agent", json=TICKET, headers=spoof_a).status_code == 200
+        assert client.post("/triage_agent", json=TICKET, headers=spoof_b).status_code == 429
 
 
 def test_rate_limit_does_not_affect_other_endpoints(client):

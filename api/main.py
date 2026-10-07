@@ -79,10 +79,12 @@ _rate_hits: Dict[str, Deque[float]] = {}
 
 
 def _client_ip(request: Request) -> str:
+    # Cloud Run appends the real client IP to the end of any client-supplied X-Forwarded-For,
+    # so only the last entry can be trusted; earlier entries are attacker-controlled.
     forwarded = request.headers.get("x-forwarded-for", "")
-    first = forwarded.split(",")[0].strip()
-    if first:
-        return first
+    last = forwarded.split(",")[-1].strip()
+    if last:
+        return last
     return request.client.host if request.client else "unknown"
 
 
