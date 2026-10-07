@@ -111,6 +111,37 @@ Copy `.env.example` to `.env`. Variables are read by `configs/settings.py`; all 
 
 `.env.example` also lists `API_BASE_URL`, which no code in this repo reads.
 
+## Reproduce The Results
+
+**Dataset source.** The repo does not record where the full dataset came from. `data/DATA_SETUP.md` only says to download it "from your original source (Kaggle or internal export)", with no dataset name or URL, so none is given here.
+
+**Sample vs full data.** The repo ships only `data/customer_support_ticket_sample.csv` (5,000 rows). The headline numbers (~200K tickets, accuracy 0.821, R2 0.7185, 69.5% handled by Tier 1) come from the full ~200,000-row `data/customer_support_ticket.csv`, which is not in git. `src/paths.py` uses the full file when it exists in `data/` and falls back to the sample otherwise, so on a fresh clone the commands below run on the sample and will not reproduce those numbers.
+
+Commands that exist in the repo (run from the project root, after the Quick start setup). I did not run any of them while writing this section, because they overwrite `models/` and `reports/`:
+
+| Step | Command | Run? |
+|---|---|---|
+| Train the three model bundles into `models/` | `python src/train_models.py` | not run |
+| Export metrics to `reports/evaluation.md` and `reports/metrics.json` | `python scripts/export_evaluation.py` | not run |
+| Escalation-gate benchmark (writes `reports/ESCALATION_GATE_BENCHMARK.md`) | `python scripts/benchmark_escalation_gate.py` | not run |
+| Local inference latency benchmark | `python scripts/benchmark_inference.py --iterations 200 --warmup 10` | not run |
+
+## Screenshots
+
+Captured from the local service at `/app` (Chromium via Playwright, models loaded, no LLM key used, so the Escalation tab shows a Tier-1-only result). Dark and light at 1280 px wide, plus dark at 390 px wide.
+
+![Priority Routing tab, dark theme, 1280 px, showing a High priority result with confidence](docs/screenshots/app-priority-dark-1280.png)
+
+![Priority Routing tab, light theme, 1280 px, showing a High priority result with confidence](docs/screenshots/app-priority-light-1280.png)
+
+![Escalation Triage tab, dark theme, 1280 px, showing Tier 1 routing and a "Handled by Tier 1" Tier 2 card](docs/screenshots/app-escalation-dark-1280.png)
+
+![Escalation Triage tab, light theme, 1280 px, showing Tier 1 routing and a "Handled by Tier 1" Tier 2 card](docs/screenshots/app-escalation-light-1280.png)
+
+![Priority Routing tab on a 390 px wide mobile screen, dark theme](docs/screenshots/app-priority-dark-390.png)
+
+![Escalation Triage tab on a 390 px wide mobile screen, dark theme](docs/screenshots/app-escalation-dark-390.png)
+
 ## Project structure
 
 ```

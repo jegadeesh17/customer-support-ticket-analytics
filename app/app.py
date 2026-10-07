@@ -19,7 +19,7 @@ def apply_theme():
     st.markdown(
         """
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 
         /* --- strip Streamlit's own chrome so this reads as an app, not a notebook --- */
         [data-testid="stSidebar"], [data-testid="collapsedControl"],
@@ -27,10 +27,10 @@ def apply_theme():
         #MainMenu, header, footer {display: none !important;}
 
         .stApp, [data-testid="stAppViewContainer"] {
-            background: #FFFAF5;
+            background: #f4f6fa;
         }
         html, body, [class*="css"], .stApp {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         .block-container {
             padding-top: 1.6rem !important;
@@ -44,10 +44,10 @@ def apply_theme():
             padding-bottom: .5rem;
         }
         .sl-brand {
-            font-size: 1.05rem; font-weight: 700; color: #7C2D12; letter-spacing: -.01em;
+            font-size: 1.05rem; font-weight: 700; color: #1d4fd1; letter-spacing: -.01em;
         }
         .sl-brand-sub {
-            font-size: .78rem; color: #A8A29E; font-weight: 500;
+            font-size: .78rem; color: #536278; font-weight: 500;
         }
 
         /* nav links rendered by st.page_link */
@@ -57,60 +57,60 @@ def apply_theme():
             font-weight: 500; justify-content: center;
         }
         [data-testid="stPageLink"] a:hover, a[data-testid="stPageLink-NavLink"]:hover {
-            background: #F5E6D3 !important;
+            background: #eef2f7 !important;
         }
 
         .sl-navitem-active {
             border-radius: 8px; padding: .38rem .55rem; text-align: center;
-            font-size: .88rem; font-weight: 600; color: #7C2D12;
-            background: #F5E6D3; border: 1px solid #E7D8C9;
+            font-size: .88rem; font-weight: 600; color: #1d4fd1;
+            background: #eef2f7; border: 1px solid #cfd7e3;
         }
 
         /* --- headings --- */
         h1 {
             font-size: 1.65rem !important; font-weight: 700 !important;
-            color: #1C1917 !important; letter-spacing: -.02em;
+            color: #14202e !important; letter-spacing: -.02em;
             padding-top: .2rem !important; padding-bottom: .1rem !important;
         }
-        h2 {font-size: 1.15rem !important; font-weight: 600 !important; color: #1C1917 !important;}
-        h3 {font-size: .95rem !important; font-weight: 600 !important; color: #1C1917 !important;}
+        h2 {font-size: 1.15rem !important; font-weight: 600 !important; color: #14202e !important;}
+        h3 {font-size: .95rem !important; font-weight: 600 !important; color: #14202e !important;}
         .sl-page-sub {
-            color: #78716C; font-size: .92rem; margin: -.2rem 0 1.1rem 0;
+            color: #435166; font-size: .92rem; margin: -.2rem 0 1.1rem 0;
         }
 
         /* --- cards --- */
         [data-testid="stForm"], .sl-card {
-            background: #FFFFFF; border: 1px solid #EDE4DA !important;
+            background: #FFFFFF; border: 1px solid #cfd7e3 !important;
             border-radius: 14px; padding: 1.15rem 1.25rem !important;
-            box-shadow: 0 1px 2px rgba(60,40,20,.04);
+            box-shadow: 0 1px 2px rgba(20,32,46,.06);
         }
 
         /* --- KPI tiles --- */
         [data-testid="stMetric"] {
-            background: #FFFFFF; border: 1px solid #EDE4DA; border-radius: 12px;
+            background: #FFFFFF; border: 1px solid #cfd7e3; border-radius: 12px;
             padding: .85rem 1rem;
         }
         [data-testid="stMetricLabel"] p {
             font-size: .76rem !important; font-weight: 600 !important;
-            color: #A8A29E !important; text-transform: uppercase; letter-spacing: .05em;
+            color: #536278 !important; text-transform: uppercase; letter-spacing: .05em;
         }
         [data-testid="stMetricValue"] {
-            font-size: 1.7rem !important; font-weight: 700 !important; color: #1C1917 !important;
+            font-size: 1.7rem !important; font-weight: 700 !important; color: #14202e !important;
         }
 
         /* --- inputs --- */
         [data-testid="stWidgetLabel"] p {
-            font-size: .82rem !important; font-weight: 600 !important; color: #44403C !important;
+            font-size: .82rem !important; font-weight: 600 !important; color: #14202e !important;
         }
         .stTextArea textarea, .stTextInput input {border-radius: 9px !important;}
         .stButton button, .stFormSubmitButton button {
             border-radius: 9px !important; font-weight: 600 !important;
-            padding: .48rem 1.05rem !important; border: 1px solid #E7D8C9 !important;
+            padding: .48rem 1.05rem !important; border: 1px solid #cfd7e3 !important;
         }
         .stFormSubmitButton button {
-            background: #C45C26 !important; color: #fff !important; border-color: #C45C26 !important;
+            background: #2563eb !important; color: #fff !important; border-color: #2563eb !important;
         }
-        .stFormSubmitButton button:hover {background: #A84E1F !important;}
+        .stFormSubmitButton button:hover {background: #1d4fd1 !important;}
 
         /* --- result panel --- */
         .sl-result {
@@ -123,15 +123,15 @@ def apply_theme():
         }
         .sl-result-value {font-size: 2.05rem; font-weight: 700; line-height: 1.15;}
         .sl-result-note {font-size: .86rem; opacity: .82;}
-        .sl-good {background: #F0FAF4; border-color: #BBE7CD; color: #14532D;}
-        .sl-warn {background: #FFFBEB; border-color: #FCE4A8; color: #78350F;}
-        .sl-bad  {background: #FEF4F2; border-color: #F9CFC6; color: #7F1D1D;}
-        .sl-info {background: #FFFFFF; border-color: #EDE4DA; color: #1C1917;}
+        .sl-good {background: #e3f5ec; border-color: #a8d9c1; color: #0b6b4a;}
+        .sl-warn {background: #fdf0d6; border-color: #ecc98a; color: #7a4a00;}
+        .sl-bad  {background: #fde8e7; border-color: #efb3b0; color: #a3201f;}
+        .sl-info {background: #FFFFFF; border-color: #cfd7e3; color: #14202e;}
 
         /* --- footer --- */
         .sl-footer {
-            margin-top: 2.2rem; padding-top: .9rem; border-top: 1px solid #EDE4DA;
-            color: #A8A29E; font-size: .76rem; display: flex;
+            margin-top: 2.2rem; padding-top: .9rem; border-top: 1px solid #cfd7e3;
+            color: #536278; font-size: .76rem; display: flex;
             justify-content: space-between; flex-wrap: wrap; gap: .4rem;
         }
         </style>
@@ -244,7 +244,7 @@ def main():
             with st.container(border=True):
                 st.markdown(f'**{title}**')
                 st.markdown(
-                    f'<span style="font-size:.86rem;color:#78716C">{body}</span>',
+                    f'<span style="font-size:.86rem;color:#435166">{body}</span>',
                     unsafe_allow_html=True,
                 )
                 st.page_link(target, label='Open')
