@@ -129,6 +129,27 @@ def _consume_llm_budget() -> bool:
         return True
 
 
+def _describe_llm_failure(exc: Exception) -> str:
+    """Short, secret-free reason for a failed LLM call (safe to show in the response)."""
+    import urllib.error
+
+    if isinstance(exc, urllib.error.HTTPError):
+        detail = ""
+        try:
+            error = json.loads(exc.read().decode("utf-8")).get("error", {})
+            detail = str(error.get("code") or error.get("type") or "")[:60]
+        except Exception:
+            pass
+        return f"provider returned HTTP {exc.code}" + (f" ({detail})" if detail else "")
+    if isinstance(exc, TimeoutError) or "timed out" in str(exc).lower():
+        return "provider timed out"
+    if isinstance(exc, urllib.error.URLError):
+        return "provider unreachable"
+    if isinstance(exc, (json.JSONDecodeError, KeyError, IndexError, ValueError)):
+        return "provider reply was not valid triage JSON"
+    return f"unexpected {type(exc).__name__}"
+
+
 def _select_provider():
     """Pick the first configured LLM provider as (endpoint_url, api_key, model).
 
@@ -220,5 +241,8 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
 
     except Exception as exc:
         # Fallback to local heuristic evaluator without throwing
-        logger.warning("LLM provider call failed, falling back to heuristics: %s", exc)
-        return _extract_heuristics(ticket)
+        reason = _describe_llm_failure(exc)
+        logger.warning("LLM provider call failed (%s), falling back to heuristics: %s", reason, exc)
+        result = _extract_heuristics(ticket)
+        result.urgency_reasoning += f" (LLM unavailable: {reason}; heuristic fallback used.)"
+        return result

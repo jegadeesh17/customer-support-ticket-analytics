@@ -152,6 +152,23 @@ def test_groq_failure_falls_back_to_heuristic(monkeypatch):
         })
 
     assert result.triage_source == "heuristic_fallback"
+    assert "provider timed out" in result.urgency_reasoning
+
+
+def test_groq_http_error_reason_is_reported(monkeypatch):
+    import io
+    import urllib.error
+
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "gsk-mock-key")
+    body = io.BytesIO(b'{"error": {"code": "model_not_found", "message": "gone"}}')
+    error = urllib.error.HTTPError("https://api.groq.com", 404, "Not Found", {}, body)
+
+    with patch("urllib.request.urlopen", side_effect=error):
+        result = run_agent_triage({"issue_description": "App is broken", "issue_complexity_score": 9})
+
+    assert result.triage_source == "heuristic_fallback"
+    assert "HTTP 404 (model_not_found)" in result.urgency_reasoning
+    assert "gsk-mock-key" not in result.urgency_reasoning
 
 
 def test_two_tier_triage_routine_ticket_no_escalation():
