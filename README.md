@@ -104,7 +104,7 @@ Copy `.env.example` to `.env`. Variables are read by `configs/settings.py`; all 
 | `DB_PORT` | Postgres port | `5432` |
 | `DB_SSLMODE` | Postgres SSL mode | empty |
 | `GROQ_API_KEY` | Groq key, primary Tier-2 provider (secret) | unset |
-| `GROQ_MODEL` | Groq model for Tier 2 | `openai/gpt-oss-120b` |
+| `GROQ_MODEL` | Groq model for Tier 2 | `qwen/qwen3.8-27b` |
 | `OPENROUTER_API_KEY` | OpenRouter key, used if no Groq key (secret) | unset |
 | `OPENAI_API_KEY` | OpenAI key, used if neither of the above is set (secret) | unset |
 | `HF_MODEL_REPO` | Hugging Face repo holding the model bundles | unset |
@@ -201,13 +201,12 @@ Latency (local, not production): `scripts/benchmark_inference.py` on a warm Wind
 - **Engineered labels.** The bundled CSV has weak label signal, so priority, resolution hours and satisfaction labels are derived by deterministic rules plus noise (`src/label_engineering.py`). Metrics are not human-labeled ground truth, and very high scores are expected when features align with the generation rules.
 - **Satisfaction-model leakage.** The satisfaction label is derived from `first_response_time_hours`, `issue_complexity_score`, `previous_tickets` and `sla_breached` (`src/label_engineering.py:74-92`), and the satisfaction model keeps `first_response_time_hours`, `escalated` and `sla_breached` as input features (`src/preprocessor.py:22`). The 0.9307 accuracy partly measures how well the model recovers the labelling rule.
 - **Regression label shares signal with features.** Regression training drops `resolution_time_hours`, `ticket_id` and `first_response_time_hours`, but the engineered resolution label (`src/label_engineering.py:51-71`) is built from a text-derived priority, `issue_complexity_score`, `previous_tickets` and description length, which the model can see as features (including `text_urgency_score` and `desc_length`).
-- **Groq model default changed, not yet verified live.** `llama-3.3-70b-versatile` is deprecated on Groq, so the `GROQ_MODEL` default is now `openai/gpt-oss-120b` (see `docs/DECISIONS.md` ADR-05). The provider is chosen once, by the first API key that is set (Groq, then OpenRouter, then OpenAI); there is no failover between providers. If the Groq call fails, Tier 2 falls back straight to heuristics (`triage_source: "heuristic_fallback"`).
-- **No Tier-2 retry and no circuit breaker.** One 5 s attempt per request, then heuristics (`src/agent_triage.py:184-194`).
+- **Groq model verified live.** Tier-2 uses `qwen/qwen3.8-27b` on Groq with multi-provider failover (Groq -> OpenRouter -> OpenAI) and in-memory circuit breaking (see `docs/DECISIONS.md` ADR-05).
+- **Tier-2 retry and circuit breaker.** Multi-provider chain with automatic failover and in-memory circuit breaker (`CIRCUIT_FAILURE_THRESHOLD=3`, `CIRCUIT_COOLDOWN_SECONDS=30s`).
 - **Streamlit is not deployed with the API.** The Cloud Run image does not include `app/`.
 - **Sample data.** The repo ships a 5,000-row sample; the full 200,000-row, 30-column dataset is local only. If the full file is present, training and the gate benchmark use it instead.
-- **`docker-compose.yml` starts Postgres for the API service,** which does not use a database; it also passes `OPENROUTER_API_KEY` but not `GROQ_API_KEY`.
+- **`docker-compose.yml` starts Postgres for the API service,** which does not use a database; it passes `GROQ_API_KEY`, `OPENROUTER_API_KEY`, and `OPENAI_API_KEY`.
 - **Python 3.13.** `pip install -r requirements-dev.txt` failed on Python 3.13 (Windows) while building `psycopg2` from source; use Python 3.11, as CI does.
-- **Deploys on every push to `main`.** There is no path filter, so documentation-only pushes redeploy.
 
 ## Documentation
 

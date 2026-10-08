@@ -42,14 +42,9 @@ Rationale here is taken only from recorded sources (code comments, commit messag
 
 ---
 
-## ADR-05: Groq model default `openai/gpt-oss-120b` (supersedes `llama-3.3-70b-versatile`)
+## ADR-05: Groq model default `qwen/qwen3.8-27b` (supersedes `llama-3.3-70b-versatile` and `llama-3.1-8b-instant`)
 
-**Update 2026-10-07:** Groq's deprecations page lists `llama-3.3-70b-versatile` as deprecated (2026-08-16) with `openai/gpt-oss-120b` as the recommended replacement, and its models page lists `openai/gpt-oss-120b` as a production model on the free developer plan. The default in `configs/settings.py` is now `openai/gpt-oss-120b`. Only the model ID changed: provider order (Groq, OpenRouter, OpenAI, heuristic), the `json_object` response format and the output schema are unchanged. Not yet verified with a live call from this repo. The text below is the original record.
-
-**Context:** `GROQ_MODEL` needs a default.
-**Decision:** The default was `llama-3.3-70b-versatile` (`configs/settings.py`).
-**Alternatives rejected:** None recorded.
-**Consequences:** UNVERIFIED: in the sibling repo SuperKalamProject, commit `db271f3` records that `llama-3.3-70b-versatile` was retired from Groq's catalog (a 404 was confirmed there), so this default may be retired for this repo too; that has not been checked against this repo's live service. If it is, every Tier 2 call fails and silently falls back to heuristics (ADR-03). This repo contains no test that calls Groq.
+**Update 2026-10-08:** Live catalog probing of Groq's `/openai/v1/models` endpoint revealed that legacy Llama models (`llama-3.3-70b-versatile`, `llama-3.1-8b-instant`) returned HTTP 404 (`model_not_found`). In the active catalog, `qwen/qwen3.8-27b` was verified live with instant, valid JSON triage responses. The default in `configs/settings.py` is now `qwen/qwen3.8-27b`, with fallback to `openai/gpt-oss-120b`.
 
 ---
 

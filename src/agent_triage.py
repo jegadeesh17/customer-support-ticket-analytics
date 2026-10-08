@@ -213,7 +213,7 @@ def _get_configured_providers() -> List[Tuple[str, str, str, str]]:
     if settings.GROQ_API_KEY:
         providers.append(("Groq", "https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, settings.GROQ_MODEL))
         # Fallback to secondary model if primary model is unavailable or mistyped
-        fallback_model = "openai/gpt-oss-20b" if settings.GROQ_MODEL != "openai/gpt-oss-20b" else "openai/gpt-oss-120b"
+        fallback_model = "openai/gpt-oss-120b" if settings.GROQ_MODEL != "openai/gpt-oss-120b" else "qwen/qwen3.8-27b"
         if fallback_model != settings.GROQ_MODEL:
             providers.append(("Groq-Fallback", "https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, fallback_model))
     if settings.OPENROUTER_API_KEY:

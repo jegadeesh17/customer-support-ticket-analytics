@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_MODEL: str = "qwen/qwen3.8-27b"
 
     # src/model_assets.py
     HF_MODEL_REPO: Optional[str] = None
