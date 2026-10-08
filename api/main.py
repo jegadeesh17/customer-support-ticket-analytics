@@ -168,6 +168,30 @@ def get_config() -> dict:
     }
 
 
+@app.get("/debug_models", include_in_schema=False)
+def debug_models() -> dict:
+    import json
+    import urllib.request
+    if not settings.GROQ_API_KEY:
+        return {"error": "GROQ_API_KEY is not set", "current_model": settings.GROQ_MODEL}
+    try:
+        req = urllib.request.Request(
+            "https://api.groq.com/openai/v1/models",
+            headers={
+                "User-Agent": "SupportOpsAnalytics/1.0 (CustomerSupportTicketAnalytics)",
+                "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+            return {
+                "current_model": settings.GROQ_MODEL,
+                "models": sorted([m["id"] for m in data.get("data", [])]),
+            }
+    except Exception as exc:
+        return {"error": str(exc), "current_model": settings.GROQ_MODEL}
+
+
 from fastapi.responses import FileResponse
 
 @app.get("/app", response_class=FileResponse, include_in_schema=False)
