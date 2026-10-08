@@ -20,6 +20,7 @@ Entries are built from the repository's own `feat:` and `fix:` commit subjects; 
 - Measured Tier-1 no-escalation rate in `reports/ESCALATION_GATE_BENCHMARK.md`, replacing an assumed 90% (`901177b`).
 
 ### Changed
+- Pruned regression and satisfaction model pipelines with Gradient Boosting and depth-constrained trees, reducing model bundles by 99.8% (from 285 MB to 428 KB) and cutting p95 latency by ~3x.
 - Streamlined `POST /predict_priority` to avoid duplicate preprocessing and model inference.
 - Stripped unused database drivers and test tools from `requirements-api.txt` and Dockerfile to optimize image footprint.
 - Decoupled `docker-compose.yml` API service from PostgreSQL and forwarded all LLM and Hugging Face environment variables.

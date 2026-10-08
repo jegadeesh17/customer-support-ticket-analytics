@@ -9,7 +9,12 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from src.model_trainer import build_feature_transformer, get_classification_pipelines
+from src.model_trainer import (
+    build_feature_transformer,
+    get_classification_pipelines,
+    get_regression_pipelines,
+    get_satisfaction_pipelines,
+)
 from src.label_engineering import (
     derive_priority_label,
     derive_resolution_hours,
@@ -124,3 +129,24 @@ def test_data_loader_csv_fallback():
     df = load_tickets(use_db=False)
     assert not df.empty
     assert "issue_description" in [c.lower().replace(" ", "_") for c in df.columns]
+
+
+def test_regression_pipelines_contain_gradient_boosting_and_pruned_rf(sample_ticket_df):
+    X = sample_ticket_df.drop(columns=["ticket_id"])
+    pipelines = get_regression_pipelines(X)
+    assert "Gradient Boosting" in pipelines
+    assert "Random Forest" in pipelines
+    rf = pipelines["Random Forest"].named_steps["regressor"]
+    assert rf.max_depth == 14
+    assert rf.min_samples_leaf == 4
+
+
+def test_satisfaction_pipelines_contain_gradient_boosting(sample_ticket_df):
+    X = sample_ticket_df.drop(columns=["ticket_id"])
+    pipelines = get_satisfaction_pipelines(X)
+    assert "Gradient Boosting" in pipelines
+    assert "Random Forest" in pipelines
+    rf = pipelines["Random Forest"].named_steps["classifier"]
+    assert rf.max_depth == 14
+    assert rf.min_samples_leaf == 4
+

@@ -13,13 +13,13 @@
 - **target:** >= 0.80
 
 ### Resolution Regression
-- **model:** Random Forest
-- **r2:** 0.7185
+- **model:** Gradient Boosting
+- **r2:** 0.7343
 - **target:** >= 0.70
 
 ### Satisfaction Classification
-- **model:** Random Forest
-- **accuracy:** 0.9307
+- **model:** Gradient Boosting
+- **accuracy:** 0.9332
 - **target:** >= 0.75
 
 ## Limitations
