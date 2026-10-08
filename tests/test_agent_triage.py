@@ -242,3 +242,65 @@ def test_two_tier_triage_force_override_escalates_routine_ticket():
     data = response.json()
     assert data["escalate_to_tier2"] is True
     assert data["escalation_trigger"] == "forced"
+
+
+def test_groq_failure_fails_over_to_openrouter(monkeypatch):
+    from unittest.mock import MagicMock
+    from src.agent_triage import _reset_circuit_breaker
+
+    _reset_circuit_breaker()
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "gsk-key")
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "sk-or-key")
+
+    mock_payload = {
+        "ticket_id": "T-123",
+        "escalate_to_tier2": True,
+        "customer_frustration_score": 8,
+        "root_cause_category": "Failover Resolved Outage",
+        "urgency_reasoning": "Resolved via OpenRouter failover.",
+        "recommended_action": "Notify customer.",
+        "auto_drafted_response": "We got it.",
+        "confidence": 0.9,
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps({
+        "choices": [{"message": {"content": json.dumps(mock_payload)}}]
+    }).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    calls = []
+
+    def mock_urlopen(req, timeout=5):
+        calls.append(req.full_url)
+        if "api.groq.com" in req.full_url:
+            raise TimeoutError("Groq gateway timed out")
+        return mock_resp
+
+    with patch("urllib.request.urlopen", side_effect=mock_urlopen):
+        result = run_agent_triage({"issue_description": "Critical outage on server"})
+
+    assert result.triage_source == "agent_llm"
+    assert result.root_cause_category == "Failover Resolved Outage"
+    assert len(calls) == 2
+    assert "api.groq.com" in calls[0]
+    assert "openrouter.ai" in calls[1]
+
+
+def test_circuit_breaker_trips_and_fast_fails(monkeypatch):
+    from src.agent_triage import _reset_circuit_breaker
+
+    _reset_circuit_breaker()
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "gsk-key")
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", None)
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", None)
+
+    with patch("urllib.request.urlopen", side_effect=TimeoutError("timed out")):
+        for _ in range(3):
+            run_agent_triage({"issue_description": "Network timeout outage"})
+
+    # 4th call should trip circuit breaker and not even attempt urlopen
+    with patch("urllib.request.urlopen", side_effect=AssertionError("urlopen should not be called")):
+        result = run_agent_triage({"issue_description": "Network timeout outage"})
+
+    assert result.triage_source == "heuristic_fallback"
+    assert "circuit breaker open" in result.urgency_reasoning

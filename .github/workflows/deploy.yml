@@ -3,6 +3,12 @@ name: Deploy API to Cloud Run
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "reports/**"
+      - "notebooks/**"
+      - ".gitignore"
   workflow_dispatch:
 
 env:

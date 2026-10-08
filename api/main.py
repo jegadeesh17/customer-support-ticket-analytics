@@ -183,19 +183,21 @@ def serve_app_ui():
 def predict_priority(ticket: TicketInput) -> PriorityResponse:
     payload = {**DEFAULT_INFERENCE_ROW, **ticket.model_dump()}
     try:
-        priority = predict_classification(payload)
+        priority, confidence = predict_classification_with_confidence(payload)
+        return PriorityResponse(predicted_priority=str(priority), confidence=confidence)
     except FileNotFoundError as exc:
         logger.exception("Missing model file in predict_priority")
         raise HTTPException(status_code=503, detail=MODEL_UNAVAILABLE_DETAIL) from exc
     except Exception as exc:
-        logger.exception("Unhandled error in predict_priority")
-        raise HTTPException(status_code=500, detail=INTERNAL_ERROR_DETAIL) from exc
-    confidence: Optional[float] = None
-    try:
-        _, confidence = predict_classification_with_confidence(payload)
-    except Exception:
-        logger.warning("Could not compute priority confidence", exc_info=True)
-    return PriorityResponse(predicted_priority=str(priority), confidence=confidence)
+        logger.warning("Could not compute priority confidence, attempting fallback: %s", exc)
+        try:
+            priority = predict_classification(payload)
+            return PriorityResponse(predicted_priority=str(priority), confidence=None)
+        except FileNotFoundError as fnf_exc:
+            raise HTTPException(status_code=503, detail=MODEL_UNAVAILABLE_DETAIL) from fnf_exc
+        except Exception as inner_exc:
+            logger.exception("Unhandled error in predict_priority")
+            raise HTTPException(status_code=500, detail=INTERNAL_ERROR_DETAIL) from inner_exc
 
 
 @app.post("/predict_resolution_hours", response_model=ResolutionResponse)

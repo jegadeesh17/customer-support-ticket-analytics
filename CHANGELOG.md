@@ -9,6 +9,8 @@ Entries are built from the repository's own `feat:` and `fix:` commit subjects; 
 ## [Unreleased]
 
 ### Added
+- Multi-provider failover (Groq -> OpenRouter -> OpenAI) and in-memory circuit breaker with fast-failure cooldown for Tier 2.
+- Smoke test suite covering ML feature pipeline transformers, synthetic label derivation, and data loading fallback.
 - Agentic escalation tier with Pydantic output contracts and a production spec (`bca4f0c`).
 - Tier-1 classifier confidence scoring (`a224197`).
 - Pure Tier-1/Tier-2 escalation gate implementing SPEC section 5.1 (`b0da305`).
@@ -18,10 +20,16 @@ Entries are built from the repository's own `feat:` and `fix:` commit subjects; 
 - Measured Tier-1 no-escalation rate in `reports/ESCALATION_GATE_BENCHMARK.md`, replacing an assumed 90% (`901177b`).
 
 ### Changed
+- Streamlined `POST /predict_priority` to avoid duplicate preprocessing and model inference.
+- Stripped unused database drivers and test tools from `requirements-api.txt` and Dockerfile to optimize image footprint.
+- Decoupled `docker-compose.yml` API service from PostgreSQL and forwarded all LLM and Hugging Face environment variables.
+- Added path filters to `.github/workflows/deploy.yml` to prevent docs and report edits from triggering Cloud Run builds.
+- Set `asyncio_default_fixture_loop_scope = function` in `pytest.ini` to resolve deprecation warnings.
 - Escalation thresholds recalibrated against the real data distribution: confidence 0.67 and 185.0 predicted hours (`af6d5e0`).
 - Documentation refresh: standard README, docs index, decisions log, changelog, MIT license and `.env.example` comments; corrected `docs/SPEC.md`, `docs/DEPLOY.md`, `docs/DEMO.md` and `data/DATA_SETUP.md` to match the code; moved the superseded `docs/PROJECT_SPEC.md` to an untracked `docs/archive/`; stopped tracking `docs/superpowers/`; extended `.gitignore`.
 
 ### Fixed
+- Sanitized LLM failure reasons reported in fallback responses (`0e65623`).
 - Production hardening: repaired `docker-compose.yml`, sanitized error responses and added typed settings (`d9bc959`).
 - Restored valid `PATH` and `PORT` variables in the Dockerfile (`cf41dcb`).
 - Final review findings: held-out benchmark sample, spec drift, field semantics and logging (`153e549`).

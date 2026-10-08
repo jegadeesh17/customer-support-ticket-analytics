@@ -15,12 +15,13 @@ if ROOT not in sys.path:
 @pytest.fixture
 def client():
     with patch("api.main.predict_classification", return_value="High"):
-        with patch("api.main.predict_regression", return_value=18.5):
-            with patch("api.main.predict_satisfaction", return_value="Mid"):
-                with patch("api.main.os.path.exists", return_value=True):
-                    from api.main import app
+        with patch("api.main.predict_classification_with_confidence", return_value=("High", 0.95)):
+            with patch("api.main.predict_regression", return_value=18.5):
+                with patch("api.main.predict_satisfaction", return_value="Mid"):
+                    with patch("api.main.os.path.exists", return_value=True):
+                        from api.main import app
 
-                    yield TestClient(app)
+                        yield TestClient(app)
 
 
 class TestHealth:
