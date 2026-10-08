@@ -17,8 +17,8 @@ Repository: https://github.com/jegadeesh17/customer-support-ticket-analytics
   - the subscription is Enterprise and complexity is above 8;
   - the caller passes `force=true` to `POST /triage_agent`.
 
-  Tier 1 handled 69.5% of 1,000 sampled tickets without escalation (`reports/ESCALATION_GATE_BENCHMARK.md`).
-- **LLM provider chain:** Groq, then OpenRouter, then OpenAI (first configured key wins). On any error, or with no key, Tier 2 falls back to deterministic heuristics (`triage_source: "heuristic_fallback"`).
+  Tier 1 handled 69.7% of 1,000 sampled tickets without escalation (`reports/ESCALATION_GATE_BENCHMARK.md`).
+- **LLM provider chain:** Groq, then OpenRouter, then OpenAI. Every configured provider is tried in that order, skipping any in circuit-breaker cooldown. If all of them fail, or no key is set, Tier 2 falls back to deterministic heuristics (`triage_source: "heuristic_fallback"`).
 - **Interfaces:** FastAPI service with a browser UI at `/app` (tabs: Priority Routing, SLA Prediction, Satisfaction Risk, Escalation Triage) and a three-page Streamlit dashboard.
 - **Data:** PostgreSQL is used only by training and data loading (`src/load_data_to_db.py`, `src/data_loader.py`); the API does not use it. EDA plots come from `python src/generate_eda.py`.
 
@@ -88,7 +88,7 @@ When Tier 2 runs, `escalation_trigger` is one of `low_confidence`, `severe_resol
 .venv/Scripts/python -m pytest tests/test_triage_gate.py -q   # one file
 ```
 
-36 tests collected and passing as of 2026-10-03 (`pytest -q` on Python 3.11, 1 deprecation warning from starlette). CI runs the same command (`.github/workflows/ci.yml`).
+61 tests collected and passing as of 2026-10-08 (`pytest -q` locally on Python 3.11.9; 2 warnings: a starlette deprecation warning and an unknown-config-option warning for `asyncio_default_fixture_loop_scope` in `pytest.ini`). CI runs the same command (`.github/workflows/ci.yml`).
 
 ## Configuration
 
@@ -105,9 +105,12 @@ Copy `.env.example` to `.env`. Variables are read by `configs/settings.py`; all 
 | `DB_SSLMODE` | Postgres SSL mode | empty |
 | `GROQ_API_KEY` | Groq key, primary Tier-2 provider (secret) | unset |
 | `GROQ_MODEL` | Groq model for Tier 2 | `qwen/qwen3.8-27b` |
-| `OPENROUTER_API_KEY` | OpenRouter key, used if no Groq key (secret) | unset |
-| `OPENAI_API_KEY` | OpenAI key, used if neither of the above is set (secret) | unset |
+| `OPENROUTER_API_KEY` | OpenRouter key, tried after Groq (secret) | unset |
+| `OPENAI_API_KEY` | OpenAI key, tried last (secret) | unset |
 | `HF_MODEL_REPO` | Hugging Face repo holding the model bundles | unset |
+| `TRIAGE_RATE_LIMIT_PER_MIN` | Max `POST /triage_agent` requests per client IP per minute; `0` disables the limit | `10` |
+| `TRIAGE_DAILY_LLM_CALLS` | Max Tier-2 LLM calls per UTC day, counted per instance | `200` |
+| `CORS_ALLOW_ORIGINS` | Comma-separated origins allowed cross-origin; empty means none | empty |
 
 `.env.example` also lists `API_BASE_URL`, which no code in this repo reads.
 
@@ -115,7 +118,7 @@ Copy `.env.example` to `.env`. Variables are read by `configs/settings.py`; all 
 
 **Dataset source.** The repo does not record where the full dataset came from. `data/DATA_SETUP.md` only says to download it "from your original source (Kaggle or internal export)", with no dataset name or URL, so none is given here.
 
-**Sample vs full data.** The repo ships only `data/customer_support_ticket_sample.csv` (5,000 rows). The headline numbers (~200K tickets, accuracy 0.821, R2 0.7185, 69.5% handled by Tier 1) come from the full ~200,000-row `data/customer_support_ticket.csv`, which is not in git. `src/paths.py` uses the full file when it exists in `data/` and falls back to the sample otherwise, so on a fresh clone the commands below run on the sample and will not reproduce those numbers.
+**Sample vs full data.** The repo ships only `data/customer_support_ticket_sample.csv` (5,000 rows). The headline numbers (~200K tickets, accuracy 0.821, R2 0.7343, 69.7% handled by Tier 1) come from the full ~200,000-row `data/customer_support_ticket.csv`, which is not in git. `src/paths.py` uses the full file when it exists in `data/` and falls back to the sample otherwise, so on a fresh clone the commands below run on the sample and will not reproduce those numbers.
 
 Commands that exist in the repo (run from the project root, after the Quick start setup). I did not run any of them while writing this section, because they overwrite `models/` and `reports/`:
 
@@ -187,19 +190,19 @@ Training samples at most 30,000 rows per task (`TRAIN_SAMPLE` in `src/train_mode
 | Task | Model | Result | Brief target |
 |---|---|---|---|
 | Priority classification | Gradient Boosting | accuracy 0.821 | >= 0.80 |
-| Resolution regression | Random Forest | R2 0.7185 | >= 0.70 |
-| Satisfaction classification | Random Forest | accuracy 0.9307 | >= 0.75 |
+| Resolution regression | Gradient Boosting | R2 0.7343 | >= 0.70 |
+| Satisfaction classification | Gradient Boosting | accuracy 0.9332 | >= 0.75 |
 
 These are pipeline-validity indicators, not production KPIs, because the labels are engineered (see Known limitations).
 
-Escalation gate: `reports/ESCALATION_GATE_BENCHMARK.md` reports 69.5% of 1,000 tickets handled by Tier 1 (147 `low_confidence`, 140 `severe_resolution`, 18 `high_risk_segment`). The sample uses a different random seed (7) from the one that derived the thresholds (42), but both come from the same CSV.
+Escalation gate: `reports/ESCALATION_GATE_BENCHMARK.md` reports 69.7% of 1,000 tickets handled by Tier 1 (147 `low_confidence`, 135 `severe_resolution`, 21 `high_risk_segment`). The sample uses a different random seed (7) from the one that derived the thresholds (42), but both come from the same CSV.
 
-Latency (local, not production): `scripts/benchmark_inference.py` on a warm Windows laptop process, 200 iterations per model, measured median about 24 ms for classification, about 50 ms for regression and about 50 ms for satisfaction (p95 about 43, 78 and 86 ms). These exclude request overhead and were not measured on Cloud Run; see `docs/SPEC.md` section 4. The Tier-2 latency is not benchmarked.
+Latency (local, not production): `scripts/benchmark_inference.py --iterations 200 --warmup 10` on a warm Windows laptop process, one run on 2026-10-08, measured median about 18 ms for classification, about 17 ms for regression and about 18 ms for satisfaction (p95 about 21, 21 and 23 ms). These exclude request overhead and were not measured on Cloud Run; see `docs/SPEC.md` section 4. The Tier-2 latency is not benchmarked.
 
 ## Known limitations
 
 - **Engineered labels.** The bundled CSV has weak label signal, so priority, resolution hours and satisfaction labels are derived by deterministic rules plus noise (`src/label_engineering.py`). Metrics are not human-labeled ground truth, and very high scores are expected when features align with the generation rules.
-- **Satisfaction-model leakage.** The satisfaction label is derived from `first_response_time_hours`, `issue_complexity_score`, `previous_tickets` and `sla_breached` (`src/label_engineering.py:74-92`), and the satisfaction model keeps `first_response_time_hours`, `escalated` and `sla_breached` as input features (`src/preprocessor.py:22`). The 0.9307 accuracy partly measures how well the model recovers the labelling rule.
+- **Satisfaction-model leakage.** The satisfaction label is derived from `first_response_time_hours`, `issue_complexity_score`, `previous_tickets` and `sla_breached` (`src/label_engineering.py:74-92`), and the satisfaction model keeps `first_response_time_hours`, `escalated` and `sla_breached` as input features (`src/preprocessor.py:22`). The 0.9332 accuracy partly measures how well the model recovers the labelling rule.
 - **Regression label shares signal with features.** Regression training drops `resolution_time_hours`, `ticket_id` and `first_response_time_hours`, but the engineered resolution label (`src/label_engineering.py:51-71`) is built from a text-derived priority, `issue_complexity_score`, `previous_tickets` and description length, which the model can see as features (including `text_urgency_score` and `desc_length`).
 - **Groq model verified live.** Tier-2 uses `qwen/qwen3.8-27b` on Groq with multi-provider failover (Groq -> OpenRouter -> OpenAI) and in-memory circuit breaking (see `docs/DECISIONS.md` ADR-05).
 - **Tier-2 retry and circuit breaker.** Multi-provider chain with automatic failover and in-memory circuit breaker (`CIRCUIT_FAILURE_THRESHOLD=3`, `CIRCUIT_COOLDOWN_SECONDS=30s`).

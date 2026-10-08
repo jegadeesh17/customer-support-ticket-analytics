@@ -36,8 +36,8 @@ flowchart TD
     
     subgraph Classical Multi-Task Pipeline
         E --> F1[GradientBoosting Priority Classifier]
-        E --> F2[RandomForest Resolution Regressor]
-        E --> F3[RandomForest Satisfaction Classifier]
+        E --> F2[GradientBoosting Resolution Regressor]
+        E --> F3[GradientBoosting Satisfaction Classifier]
     end
 
     F1 --> G{Escalation Gate}
@@ -83,19 +83,18 @@ In support ticket analytics, post-creation attributes routinely contaminate trai
 > asserted design goals with no benchmark code backing them. `scripts/benchmark_inference.py`
 > now exists to measure the Classical ML Tier (loads each model bundle once per process, matching
 > the `@lru_cache` warm-process pattern in `src/inference.py`, then times N repeated single-row
-> predictions). A local run on a warm dev-machine process (200 iterations/model, CPU inference,
+> predictions). A local run on 2026-10-08, on a warm dev-machine process (200 iterations/model, CPU inference,
 > Windows laptop — not the production Cloud Run instance/CPU class) measured:
 >
 > | Task | p50 | p95 | p99 |
 > | :--- | ---: | ---: | ---: |
-> | classification | ~24 ms | ~43 ms | ~64 ms |
-> | regression | ~50 ms | ~78 ms | ~95 ms |
-> | satisfaction | ~50 ms | ~86 ms | ~125 ms |
+> | classification | ~18 ms | ~21 ms | ~25 ms |
+> | regression | ~17 ms | ~21 ms | ~25 ms |
+> | satisfaction | ~18 ms | ~23 ms | ~24 ms |
 >
-> These are roughly 2-3x the table's p50/p95 targets and up to ~3x at p99, and they exclude request/response
-> (de)serialization and network overhead, so real API latency will be somewhat higher still. The gap is likely
-> explained by unpickling/prediction cost of the larger regression/satisfaction bundles (regression_model.pkl
-> is 218 MB, see `src/inference.py`) plus this being a laptop rather than the deployed Cloud Run CPU class.
+> Against the targets in the table below, p50 is about 2x the p50 target (<= 8 ms), while p95 and p99 are within their targets for every task. These figures exclude request/response
+> (de)serialization and network overhead, so real API latency will be higher. The earlier figures (p50 about 24, 50 and 50 ms) were measured on the pre-pruning bundles, when the regression bundle was 218 MB;
+> those earlier figures are superseded by the table above. The run was on a laptop, not the deployed Cloud Run CPU class.
 > The table below is kept as the aspirational **target**; treat it as directional until it is re-measured
 > against the actual Cloud Run service (e.g. with `scripts/benchmark_inference.py` run inside the deployed
 > container, or an end-to-end load test against `/predict_*`). The Agentic Escalation Tier numbers remain
@@ -152,7 +151,7 @@ and is `null` whenever Tier 2 did not run (the fast, non-escalated path).
 | Failure Mode | Impact | Mitigation Strategy |
 | :--- | :--- | :--- |
 | **Model Bundle Unpickling Error** | Prediction failure (HTTP 500; HTTP 503 when a bundle file is missing) | Compatibility alias for `sklearn._loss._loss` registered at import time (`src/inference.py:8-9`). |
-| **LLM Gateway Timeout / Outage** | Triage latency spike | 5 s request timeout; any LLM error (or no provider configured) falls back to deterministic keyword-based heuristics (`src/agent_triage.py`). There is no circuit breaker and Tier 2 is not retried. |
+| **LLM Gateway Timeout / Outage** | Triage latency spike | 5 s request timeout; any LLM error (or no provider configured) falls back to deterministic keyword-based heuristics (`src/agent_triage.py`). Each provider is tried once per request (one extra attempt without `response_format` on HTTP 400); an in-memory circuit breaker skips a provider for 30 s after 3 consecutive failures (`src/agent_triage.py:167-168`). |
 | **Missing Input Features** | Inference ValueError | `build_inference_row` automatically hydrates dataset medians and empty text fallbacks. |
 | **PostgreSQL Connection Drops** | Training / data-loading failure only; the API does not use PostgreSQL | `load_tickets()` falls back to the local CSV (`src/data_loader.py`). The API serves from model bundles and never queries the database. |
 

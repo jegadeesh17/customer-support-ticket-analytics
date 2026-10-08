@@ -27,7 +27,7 @@ hf auth login
 python scripts/upload_models_to_hf.py --repo-id jegadeesh17/support-ops-models
 ```
 
-This uploads three `.pkl` bundles (~280 MB total). Use a **public** repo.
+This uploads three `.pkl` bundles (about 430 KB total for the current pruned bundles; the pre-pruning bundles were about 280 MB). Use a **public** repo.
 
 ## Step 2 — Set up Neon PostgreSQL
 
@@ -62,7 +62,7 @@ HF_MODEL_REPO = "jegadeesh17/support-ops-models"
 DATABASE_URL = "postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require"
 ```
 
-5. Deploy. First load downloads model bundles from Hugging Face (~285 MB), then caches
+5. Deploy. First load downloads model bundles from Hugging Face (about 430 KB for the current pruned bundles), then caches
    them in-process — `requirements.txt` is deliberately limited to the UI runtime set, so
    keep training/notebook packages in `requirements-dev.txt` to protect the build.
 
@@ -90,7 +90,7 @@ Create a service account (for example `github-deployer`) that can push to Artifa
 
 ## Step 6 — Deploy API to Cloud Run
 
-1. **Actions** → **Deploy API to Cloud Run** → **Run workflow**. The workflow also runs on every push to `main`, with no path filter, so a docs-only push to `main` redeploys.
+1. **Actions** → **Deploy API to Cloud Run** → **Run workflow**. The workflow also runs on pushes to `main` unless the push only touches paths listed in `paths-ignore` in `deploy.yml` (`docs/**`, root-level `*.md`, `reports/**`, `notebooks/**`, `.gitignore`), so a docs-only push does not redeploy.
 2. Test endpoints:
 
 ```bash
