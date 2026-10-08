@@ -10,8 +10,9 @@ import json
 import logging
 import re
 import threading
+import time
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field
 
 from configs.settings import settings
@@ -129,40 +130,111 @@ def _consume_llm_budget() -> bool:
         return True
 
 
+def _describe_llm_failure(exc: Exception) -> str:
+    """Short, secret-free reason for a failed LLM call (safe to show in the response)."""
+    import urllib.error
+
+    if isinstance(exc, urllib.error.HTTPError):
+        detail = ""
+        try:
+            error = json.loads(exc.read().decode("utf-8")).get("error", {})
+            detail = str(error.get("code") or error.get("type") or "")[:60]
+        except Exception:
+            pass
+        return f"provider returned HTTP {exc.code}" + (f" ({detail})" if detail else "")
+    if isinstance(exc, TimeoutError) or "timed out" in str(exc).lower():
+        return "provider timed out"
+    if isinstance(exc, urllib.error.URLError):
+        return "provider unreachable"
+    if isinstance(exc, (json.JSONDecodeError, KeyError, IndexError, ValueError)):
+        return "provider reply was not valid triage JSON"
+    return f"unexpected {type(exc).__name__}"
+
+
+_circuit_lock = threading.Lock()
+_circuit_state: Dict[str, Dict[str, Any]] = {}
+CIRCUIT_FAILURE_THRESHOLD = 3
+CIRCUIT_COOLDOWN_SECONDS = 30.0
+
+
+def _reset_circuit_breaker() -> None:
+    """Reset circuit breaker state (used in testing)."""
+    with _circuit_lock:
+        _circuit_state.clear()
+
+
+def _is_circuit_open(provider_name: str) -> bool:
+    now = time.monotonic()
+    with _circuit_lock:
+        state = _circuit_state.get(provider_name)
+        if not state:
+            return False
+        return state.get("open_until", 0.0) > now
+
+
+def _record_provider_success(provider_name: str) -> None:
+    with _circuit_lock:
+        if provider_name in _circuit_state:
+            _circuit_state[provider_name] = {"failures": 0, "open_until": 0.0}
+
+
+def _record_provider_failure(provider_name: str) -> None:
+    now = time.monotonic()
+    with _circuit_lock:
+        state = _circuit_state.setdefault(provider_name, {"failures": 0, "open_until": 0.0})
+        state["failures"] += 1
+        if state["failures"] >= CIRCUIT_FAILURE_THRESHOLD:
+            state["open_until"] = now + CIRCUIT_COOLDOWN_SECONDS
+            logger.warning(
+                "Circuit breaker tripped for LLM provider '%s' after %d consecutive failures. Cooling down for %.0fs.",
+                provider_name,
+                state["failures"],
+                CIRCUIT_COOLDOWN_SECONDS,
+            )
+
+
+def _get_configured_providers() -> List[Tuple[str, str, str, str]]:
+    """Return all configured LLM providers as a list of (name, endpoint_url, api_key, model).
+
+    Priority order: Groq (fast, primary) -> OpenRouter -> OpenAI.
+    """
+    providers = []
+    if settings.GROQ_API_KEY:
+        providers.append(("Groq", "https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, settings.GROQ_MODEL))
+    if settings.OPENROUTER_API_KEY:
+        providers.append(("OpenRouter", "https://openrouter.ai/api/v1/chat/completions", settings.OPENROUTER_API_KEY, "google/gemini-2.0-flash-001"))
+    if settings.OPENAI_API_KEY:
+        providers.append(("OpenAI", "https://api.openai.com/v1/chat/completions", settings.OPENAI_API_KEY, "gpt-4o-mini"))
+    return providers
+
+
 def _select_provider():
     """Pick the first configured LLM provider as (endpoint_url, api_key, model).
 
-    Order: Groq (fast, the newly configured provider) -> OpenRouter -> OpenAI.
-    Returns None if nothing is configured, in which case the caller falls
-    back to deterministic heuristics.
+    Preserved for backwards compatibility.
     """
-    if settings.GROQ_API_KEY:
-        return ("https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, settings.GROQ_MODEL)
-    if settings.OPENROUTER_API_KEY:
-        return ("https://openrouter.ai/api/v1/chat/completions", settings.OPENROUTER_API_KEY, "google/gemini-2.0-flash-001")
-    if settings.OPENAI_API_KEY:
-        return ("https://api.openai.com/v1/chat/completions", settings.OPENAI_API_KEY, "gpt-4o-mini")
+    providers = _get_configured_providers()
+    if providers:
+        _, endpoint_url, key, model = providers[0]
+        return (endpoint_url, key, model)
     return None
 
 
 def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> AgentTriageResult:
     """Evaluate a support ticket and return structured triage diagnostics.
 
-    An explicit api_key argument is sent to OpenRouter directly (used by
-    callers/tests that already hold a specific key). Otherwise the first
-    configured provider from _select_provider() is used. Falls back
-    gracefully to deterministic heuristics on network error or when no
-    provider is configured.
+    An explicit api_key argument is sent to OpenRouter directly (used by callers/tests).
+    Otherwise configured providers are attempted in priority order (Groq -> OpenRouter -> OpenAI).
+    Falls back to secondary configured providers on transient/HTTP errors, and finally
+    to deterministic heuristics if all providers fail or their circuit breaker is open.
     """
     if api_key:
-        provider = ("https://openrouter.ai/api/v1/chat/completions", api_key, "google/gemini-2.0-flash-001")
+        providers = [("Custom", "https://openrouter.ai/api/v1/chat/completions", api_key, "google/gemini-2.0-flash-001")]
     else:
-        provider = _select_provider()
+        providers = _get_configured_providers()
 
-    if provider is None:
+    if not providers:
         return _extract_heuristics(ticket)
-
-    endpoint_url, key, model = provider
 
     if not _consume_llm_budget():
         logger.warning("Daily Tier-2 LLM budget exhausted; using heuristic fallback")
@@ -170,25 +242,34 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
         result.urgency_reasoning += " (Daily LLM budget exhausted; heuristic fallback used.)"
         return result
 
-    try:
-        import urllib.request
+    available_providers = [p for p in providers if not _is_circuit_open(p[0])]
+    if not available_providers:
+        logger.warning("All LLM providers currently in circuit-breaker cooldown; using heuristic fallback")
+        result = _extract_heuristics(ticket)
+        result.urgency_reasoning += " (LLM unavailable: circuit breaker open; heuristic fallback used.)"
+        return result
 
-        system_prompt = (
-            "You are an expert Principal Customer Operations Triage Agent. "
-            "Analyze the support ticket metadata and description. Respond ONLY with a valid JSON object matching this schema:\n"
-            "{\n"
-            '  "ticket_id": string or null,\n'
-            '  "escalate_to_tier2": boolean,\n'
-            '  "customer_frustration_score": integer between 1 and 10,\n'
-            '  "root_cause_category": string,\n'
-            '  "urgency_reasoning": string,\n'
-            '  "recommended_action": string,\n'
-            '  "auto_drafted_response": string,\n'
-            '  "confidence": float between 0.0 and 1.0\n'
-            "}"
-        )
+    system_prompt = (
+        "You are an expert Principal Customer Operations Triage Agent. "
+        "Analyze the support ticket metadata and description. Respond ONLY with a valid JSON object matching this schema:\n"
+        "{\n"
+        '  "ticket_id": string or null,\n'
+        '  "escalate_to_tier2": boolean,\n'
+        '  "customer_frustration_score": integer between 1 and 10,\n'
+        '  "root_cause_category": string,\n'
+        '  "urgency_reasoning": string,\n'
+        '  "recommended_action": string,\n'
+        '  "auto_drafted_response": string,\n'
+        '  "confidence": float between 0.0 and 1.0\n'
+        "}"
+    )
 
-        user_content = json.dumps(ticket, indent=2)
+    import urllib.request
+
+    user_content = json.dumps(ticket, indent=2)
+    last_reason = "provider unavailable"
+
+    for name, endpoint_url, key, model in available_providers:
         payload = {
             "model": model,
             "messages": [
@@ -211,14 +292,23 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
             method="POST",
         )
 
-        with urllib.request.urlopen(req, timeout=5) as response:
-            res_data = json.loads(response.read().decode("utf-8"))
-            content = res_data["choices"][0]["message"]["content"]
-            parsed = json.loads(content)
-            parsed["triage_source"] = "agent_llm"
-            return AgentTriageResult(**parsed)
+        try:
+            with urllib.request.urlopen(req, timeout=5) as response:
+                res_data = json.loads(response.read().decode("utf-8"))
+                content = res_data["choices"][0]["message"]["content"]
+                parsed = json.loads(content)
+                parsed["triage_source"] = "agent_llm"
+                _record_provider_success(name)
+                return AgentTriageResult(**parsed)
+        except Exception as exc:
+            _record_provider_failure(name)
+            reason = _describe_llm_failure(exc)
+            last_reason = reason
+            logger.warning("LLM provider '%s' call failed (%s): %s", name, reason, exc)
+            continue
 
-    except Exception as exc:
-        # Fallback to local heuristic evaluator without throwing
-        logger.warning("LLM provider call failed, falling back to heuristics: %s", exc)
-        return _extract_heuristics(ticket)
+    # Fallback to local heuristic evaluator if all attempted providers failed
+    result = _extract_heuristics(ticket)
+    result.urgency_reasoning += f" (LLM unavailable: {last_reason}; heuristic fallback used.)"
+    return result
+

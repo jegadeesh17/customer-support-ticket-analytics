@@ -3,7 +3,12 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingClassifier
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    RandomForestRegressor,
+    GradientBoostingClassifier,
+    GradientBoostingRegressor,
+)
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.impute import SimpleImputer
@@ -116,7 +121,15 @@ def get_regression_pipelines(X_train):
         ]),
         'Random Forest': Pipeline([
             ('preprocessor', build_feature_transformer(X_train, include_text=True)),
-            ('regressor', RandomForestRegressor(n_estimators=100, random_state=RANDOM_SEED, n_jobs=-1)),
+            ('regressor', RandomForestRegressor(
+                n_estimators=100, max_depth=14, min_samples_leaf=4, random_state=RANDOM_SEED, n_jobs=-1
+            )),
+        ]),
+        'Gradient Boosting': Pipeline([
+            ('preprocessor', build_feature_transformer(X_train, include_text=True)),
+            ('regressor', GradientBoostingRegressor(
+                n_estimators=100, max_depth=5, random_state=RANDOM_SEED
+            )),
         ]),
         'Neural Network (MLP)': Pipeline([
             ('preprocessor', build_feature_transformer(X_train, include_text=True)),
@@ -140,11 +153,16 @@ def get_satisfaction_pipelines(X_train):
         'Random Forest': Pipeline([
             ('preprocessor', build_feature_transformer(X_train, include_text=True)),
             ('classifier', RandomForestClassifier(
-                n_estimators=100, class_weight='balanced', random_state=RANDOM_SEED, n_jobs=-1
+                n_estimators=100, max_depth=14, min_samples_leaf=4, class_weight='balanced', random_state=RANDOM_SEED, n_jobs=-1
             )),
+        ]),
+        'Gradient Boosting': Pipeline([
+            ('preprocessor', build_feature_transformer(X_train, include_text=True)),
+            ('classifier', GradientBoostingClassifier(random_state=RANDOM_SEED)),
         ]),
         'Neural Network (MLP)': Pipeline([
             ('preprocessor', build_feature_transformer(X_train, include_text=True)),
             ('classifier', MLPClassifierWrapper(random_state=RANDOM_SEED)),
         ]),
     }
+

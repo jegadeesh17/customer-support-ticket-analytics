@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 COPY requirements-api.txt ./
 RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
-    /opt/venv/bin/pip install --no-cache-dir -r requirements-api.txt huggingface_hub
+    /opt/venv/bin/pip install --no-cache-dir -r requirements-api.txt
 
 # Stage 2: Minimal non-root runner
 FROM python:3.11-slim AS runner

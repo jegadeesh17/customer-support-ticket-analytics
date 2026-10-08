@@ -84,7 +84,7 @@ def train_classification(df, models_dir):
     print(classification_report(y_test, y_pred))
 
     path = os.path.join(models_dir, 'classification_model.pkl')
-    joblib.dump({'model': best_model, 'model_name': best_name, 'accuracy': acc}, path)
+    joblib.dump({'model': best_model, 'model_name': best_name, 'accuracy': acc}, path, compress=3)
     print(f'Saved {path}')
     return acc
 
@@ -134,7 +134,7 @@ def train_regression(df, models_dir):
         'model_name': best_name,
         'r2': r2,
         'log_target': True,
-    }, path)
+    }, path, compress=3)
     print(f'Saved {path}')
     return r2
 
@@ -171,7 +171,7 @@ def train_satisfaction(df, models_dir):
     print(classification_report(y_test, y_pred))
 
     path = os.path.join(models_dir, 'satisfaction_model.pkl')
-    joblib.dump({'model': best_model, 'model_name': best_name, 'accuracy': acc}, path)
+    joblib.dump({'model': best_model, 'model_name': best_name, 'accuracy': acc}, path, compress=3)
     print(f'Saved {path}')
     return acc
 
