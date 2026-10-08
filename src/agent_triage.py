@@ -201,6 +201,9 @@ def _get_configured_providers() -> List[Tuple[str, str, str, str]]:
     providers = []
     if settings.GROQ_API_KEY:
         providers.append(("Groq", "https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, settings.GROQ_MODEL))
+        # Fallback to standard 8b model if primary model is unavailable or mistyped
+        if settings.GROQ_MODEL != "llama-3.1-8b-instant":
+            providers.append(("Groq-Fallback", "https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, "llama-3.1-8b-instant"))
     if settings.OPENROUTER_API_KEY:
         providers.append(("OpenRouter", "https://openrouter.ai/api/v1/chat/completions", settings.OPENROUTER_API_KEY, "google/gemini-2.0-flash-001"))
     if settings.OPENAI_API_KEY:
