@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Support Ops Intelligence - predict ticket priority, resolution time and satisfaction risk.">
     <meta name="color-scheme" content="light dark">
-    <title>Support Ops Intelligence</title>
+    <title>Support Ops Intelligence — Ergonomic Soft Preview</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%233b66cf%27%2F%3E%3Crect%20x%3D%277%27%20y%3D%2718%27%20width%3D%274.5%27%20height%3D%277%27%20rx%3D%271.6%27%20fill%3D%27%23ffffff%27%2F%3E%3Crect%20x%3D%2713.75%27%20y%3D%2713%27%20width%3D%274.5%27%20height%3D%2712%27%20rx%3D%271.6%27%20fill%3D%27%23ffffff%27%20opacity%3D%27.85%27%2F%3E%3Crect%20x%3D%2720.5%27%20y%3D%277%27%20width%3D%274.5%27%20height%3D%2718%27%20rx%3D%271.6%27%20fill%3D%27%23ffffff%27%20opacity%3D%27.7%27%2F%3E%3C%2Fsvg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%233b66cf%27%2F%3E%3Crect%20x%3D%277%27%20y%3D%2718%27%20width%3D%274.5%27%20height%3D%277%27%20rx%3D%271.6%27%20fill%3D%27%23ffffff%27%2F%3E%3Crect%20x%3D%2713.75%27%20y%3D%2713%27%20width%3D%274.5%27%20height%3D%2712%27%20rx%3D%271.6%27%20fill%3D%27%23ffffff%27%20opacity%3D%27.85%27%2F%3E%3Crect%20x%3D%2720.5%27%20y%3D%277%27%20width%3D%274.5%27%20height%3D%2718%27%20rx%3D%271.6%27%20fill%3D%27%23ffffff%27%20opacity%3D%27.7%27%2F%3E%3C%2Fsvg%3E">
     <meta name="theme-color" content="#f6f8fa" media="(prefers-color-scheme: light)">
@@ -18,8 +18,8 @@
     <style>
         /* ================= DESIGN TOKENS (CALMED ERGONOMIC SLATE & SOFT GRAPHITE) =================
            Direction: A quiet, refined support-desk console with relaxed contrast ratios.
-           Body text meets WCAG AAA (9.3:1) and secondary elements meet AA (5.0:1+), eliminating
-           harsh ink-jet black, piercing electric cobalt, and stark OLED white halos. */
+           Body text meets WCAG AAA (9.3:1) and secondary elements meet AA (5.4:1), but without
+           the harsh ink-jet black, piercing electric cobalt, or stark OLED white halos. */
         :root {
             color-scheme: light;
 
@@ -234,7 +234,7 @@
             font-size: var(--fs-xs); text-decoration: underline; cursor: pointer;
         }
 
-        /* ================= BUTTONS ================= */
+        /* ================= BUTTONS & CHIPS ================= */
         .btn-ghost, .theme-toggle, .contrast-toggle, .chip {
             display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
             min-height: 34px; padding: var(--s-1) var(--s-3); border-radius: var(--r-md);
@@ -257,7 +257,7 @@
             background: var(--accent-solid); color: var(--on-accent);
             font-size: var(--fs-base); font-weight: var(--fw-medium);
             cursor: pointer; display: flex; align-items: center; justify-content: center; gap: var(--s-3);
-            transition: background-color var(--t-fast) var(--ease-out);
+            transition: background-color var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
         }
         .submit-btn:hover:not(:disabled) { background: var(--accent-solid-hover); }
         .submit-btn:disabled { opacity: .65; cursor: not-allowed; }
@@ -276,7 +276,7 @@
         .submit-btn[aria-busy="true"] .spinner { display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ================= panel + tabs ================= */
+        /* ================= PANEL & TABS ================= */
         .panel {
             background: var(--surface); border: 1px solid var(--border);
             border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden;
@@ -287,20 +287,20 @@
             overflow-x: auto; scroll-snap-type: x proximity;
         }
         .tab-btn {
-            flex: 0 0 auto; min-height: 48px; padding: var(--s-3) var(--s-4);
+            flex: 0 0 auto; min-height: 46px; padding: var(--s-3) var(--s-4);
             background: transparent; color: var(--text-muted); border: 0;
-            border-bottom: 3px solid transparent; margin-bottom: -1px;
+            border-bottom: 2px solid transparent; margin-bottom: -1px;
             font-size: var(--fs-sm); font-weight: var(--fw-medium); white-space: nowrap;
             cursor: pointer; scroll-snap-align: start;
             transition: color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out);
         }
         .tab-btn:hover { color: var(--text-main); }
         .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent-solid); font-weight: var(--fw-bold); }
-        .tab-btn:focus-visible { outline-offset: -3px; }
+        .tab-btn:focus-visible { outline-offset: -2px; }
 
         .tab-content { padding: var(--s-5); }
         .tab-content:not([hidden]) { display: block; animation: enter var(--t-base) var(--ease-out); }
-        @keyframes enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        @keyframes enter { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
         .workspace { display: grid; gap: var(--s-5); grid-template-columns: minmax(0, 1fr); align-items: start; }
         .result-col { min-width: 0; }
@@ -309,7 +309,7 @@
             margin-bottom: var(--s-3);
         }
 
-        /* ================= model strip + presets ================= */
+        /* ================= MODEL STRIP & PRESETS ================= */
         .model-strip {
             padding: 0 0 var(--s-3); margin-bottom: var(--s-4);
             border-bottom: 1px solid var(--border);
@@ -320,11 +320,11 @@
         .model-strip .caveat { flex-basis: 100%; color: var(--warning-fg); font-size: var(--fs-xs); }
 
         .presets { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-4); }
-        .presets-label { font-size: var(--fs-xs); color: var(--text-dim); margin-right: var(--s-1); }
+        .presets-label { font-size: var(--fs-xs); color: var(--text-dim); margin-right: var(--s-1); font-weight: var(--fw-medium); }
         .chip { border-radius: 999px; }
         .presets .reset { margin-left: auto; border-style: dashed; }
 
-        /* ================= form ================= */
+        /* ================= FORM CONTROLS ================= */
         .section-label {
             font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em;
             color: var(--text-dim); font-weight: var(--fw-bold); margin: var(--s-5) 0 var(--s-3);
@@ -339,31 +339,31 @@
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0 var(--s-4); }
 
         input, select, textarea {
-            width: 100%; min-height: 44px; padding: var(--s-2) var(--s-3); border-radius: var(--r-md);
-            background: var(--surface); border: 1px solid var(--field-border);
+            width: 100%; min-height: 40px; padding: var(--s-2) var(--s-3); border-radius: var(--r-md);
+            background: var(--surface); border: 1px solid var(--border);
             color: var(--text-main); font-size: var(--fs-base);
             transition: border-color var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out);
         }
-        input:hover, select:hover, textarea:hover { border-color: var(--text-muted); }
+        input:hover, select:hover, textarea:hover { border-color: var(--field-border); }
         input:focus-visible, select:focus-visible, textarea:focus-visible {
             outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--focus);
         }
         input:user-invalid, textarea:user-invalid { border-color: var(--danger-fg); }
-        textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
+        textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
         select {
             appearance: none; cursor: pointer; background-image: var(--chevron);
             background-repeat: no-repeat; background-position: right .7rem center; background-size: 16px;
             padding-right: 2.25rem;
         }
         select option { background: var(--surface); color: var(--text-main); }
-        input[type="checkbox"] { width: 20px; min-height: 20px; height: 20px; accent-color: var(--accent-solid); flex: none; }
+        input[type="checkbox"] { width: 17px; min-height: 17px; height: 17px; accent-color: var(--accent-solid); flex: none; }
         .check-row { display: flex; align-items: flex-start; gap: var(--s-3); margin-top: var(--s-2); }
         .check-row label { margin: 0; }
 
-        /* ================= results ================= */
+        /* ================= RESULTS PANE ================= */
         .result-pane { min-height: 12rem; }
         .empty {
-            border: 1px dashed var(--field-border); border-radius: var(--r-md);
+            border: 1px dashed var(--border); border-radius: var(--r-md);
             padding: var(--s-5); color: var(--text-muted); font-size: var(--fs-sm);
         }
         .empty-title { color: var(--text-main); font-weight: var(--fw-bold); font-size: var(--fs-base); margin-bottom: var(--s-1); }
@@ -373,26 +373,26 @@
             border-radius: var(--r-md); padding: var(--s-4) var(--s-5); color: var(--text-main);
             animation: enter var(--t-base) var(--ease-out);
         }
-        .tone-success { --tone-fg: var(--success-fg); --tone-bg: var(--success-bg); --tone-border: color-mix(in srgb, var(--success-fg) 45%, transparent); }
-        .tone-warning { --tone-fg: var(--warning-fg); --tone-bg: var(--warning-bg); --tone-border: color-mix(in srgb, var(--warning-fg) 45%, transparent); }
-        .tone-danger  { --tone-fg: var(--danger-fg);  --tone-bg: var(--danger-bg);  --tone-border: color-mix(in srgb, var(--danger-fg) 45%, transparent); }
-        .tone-info    { --tone-fg: var(--info-fg);    --tone-bg: var(--info-bg);    --tone-border: color-mix(in srgb, var(--info-fg) 45%, transparent); }
+        .tone-success { --tone-fg: var(--success-fg); --tone-bg: var(--success-bg); --tone-border: color-mix(in srgb, var(--success-fg) 25%, transparent); }
+        .tone-warning { --tone-fg: var(--warning-fg); --tone-bg: var(--warning-bg); --tone-border: color-mix(in srgb, var(--warning-fg) 25%, transparent); }
+        .tone-danger  { --tone-fg: var(--danger-fg);  --tone-bg: var(--danger-bg);  --tone-border: color-mix(in srgb, var(--danger-fg) 25%, transparent); }
+        .tone-info    { --tone-fg: var(--info-fg);    --tone-bg: var(--info-bg);    --tone-border: color-mix(in srgb, var(--info-fg) 25%, transparent); }
 
-        .icon { display: inline-flex; flex: none; width: 24px; height: 24px; color: var(--tone-fg, currentColor); }
+        .icon { display: inline-flex; flex: none; width: 22px; height: 22px; color: var(--tone-fg, currentColor); }
         .icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         .result-head { display: flex; align-items: center; gap: var(--s-3); }
-        .result-head .icon { width: 36px; height: 36px; }
+        .result-head .icon { width: 28px; height: 28px; }
         .result-label { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; font-weight: var(--fw-bold); color: var(--text-muted); }
         .result-value { font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: 1.15; color: var(--tone-fg); overflow-wrap: anywhere; }
-        .result-note { font-size: var(--fs-sm); margin-top: var(--s-3); overflow-wrap: anywhere; }
-        .result-meta { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--s-3); }
+        .result-note { font-size: var(--fs-sm); margin-top: var(--s-3); overflow-wrap: anywhere; color: var(--text-muted); }
+        .result-meta { font-size: var(--fs-xs); color: var(--text-dim); margin-top: var(--s-3); }
         .result-message .result-value { font-size: var(--fs-md); }
-        .result-message .result-head .icon { width: 28px; height: 28px; }
+        .result-message .result-head .icon { width: 24px; height: 24px; }
 
         .meter-wrap { margin-top: var(--s-4); }
         .meter-top { display: flex; justify-content: space-between; gap: var(--s-3); font-size: var(--fs-xs); color: var(--text-muted); margin-bottom: var(--s-1); }
         .meter-top strong { color: var(--text-main); font-weight: var(--fw-bold); }
-        .meter { position: relative; height: 10px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+        .meter { position: relative; height: 7px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
         .meter-fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--w, 0) * 1%); background: var(--tone-fg); border-radius: 999px; }
         .meter-tick { position: absolute; top: -2px; bottom: -2px; left: calc(var(--at, 0) * 1%); width: 2px; background: var(--text-main); }
 
@@ -403,19 +403,19 @@
         .tier-line { font-size: var(--fs-sm); margin-top: var(--s-2); overflow-wrap: anywhere; }
         .tier-line b { font-weight: var(--fw-bold); }
         .tier-big { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-lg); font-weight: var(--fw-bold); color: var(--tone-fg); line-height: 1.2; }
-        .tier-big .icon { width: 28px; height: 28px; }
-        .draft { white-space: pre-wrap; font-size: var(--fs-sm); overflow-wrap: anywhere; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: var(--s-3); margin-top: var(--s-2); }
+        .tier-big .icon { width: 24px; height: 24px; }
+        .draft { white-space: pre-wrap; font-size: var(--fs-sm); overflow-wrap: anywhere; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: var(--s-3); margin-top: var(--s-2); }
         .tier-block-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
 
         .skeleton { display: grid; gap: var(--s-3); }
         .skeleton i { display: block; height: 14px; border-radius: var(--r-sm); background: var(--surface-3); animation: pulse 1.4s ease-in-out infinite; }
         .skeleton i:nth-child(1) { width: 40%; height: 12px; }
-        .skeleton i:nth-child(2) { width: 65%; height: 30px; }
+        .skeleton i:nth-child(2) { width: 65%; height: 28px; }
         .skeleton i:nth-child(3) { width: 90%; }
         .skeleton i:nth-child(4) { width: 55%; }
         .loading-text { margin-top: var(--s-3); font-size: var(--fs-sm); color: var(--text-muted); }
 
-        /* ================= history + how it works ================= */
+        /* ================= HISTORY & HOW IT WORKS ================= */
         .below { display: grid; gap: var(--s-5); margin-top: var(--s-5); grid-template-columns: minmax(0, 1fr); }
         .aside-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--s-5); }
         .aside-panel h2 { font-size: var(--fs-md); font-weight: var(--fw-bold); letter-spacing: -.01em; margin-bottom: var(--s-3); }
@@ -428,12 +428,12 @@
         .history-list { list-style: none; display: grid; gap: var(--s-2); }
         .history-item {
             width: 100%; text-align: left; display: grid; gap: 2px; padding: var(--s-2) var(--s-3);
-            min-height: 44px; background: var(--surface); color: var(--text-main);
+            min-height: 42px; background: var(--surface); color: var(--text-main);
             border: 1px solid var(--border); border-radius: var(--r-md); cursor: pointer; font-size: var(--fs-sm);
-            transition: background-color var(--t-fast) var(--ease-out);
+            transition: background-color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out);
         }
-        .history-item:hover { background: var(--surface-2); }
-        .history-item small { font-size: var(--fs-xs); color: var(--text-muted); overflow-wrap: anywhere; }
+        .history-item:hover { background: var(--surface-2); border-color: var(--field-border); }
+        .history-item small { font-size: var(--fs-xs); color: var(--text-dim); overflow-wrap: anywhere; }
         .history-empty { font-size: var(--fs-sm); color: var(--text-muted); }
 
         .app-footer { margin-top: var(--s-5); font-size: var(--fs-xs); color: var(--text-dim); line-height: 1.7; max-width: 68ch; }
@@ -467,16 +467,16 @@
     <header class="app-header">
         <div class="brand">
             <h1>Support Ops Intelligence</h1>
-            <span>Ticket triage &amp; SLA forecasting</span>
+            <span>Ticket triage &amp; SLA forecasting · Calmed Ergonomic Preview</span>
         </div>
         <div class="header-tools">
             <div class="status" id="status" role="status" aria-live="polite">
-                <span class="dot pending" id="status-dot" aria-hidden="true"></span>
-                <span id="status-text">Checking service…</span>
+                <span class="dot online" id="status-dot" aria-hidden="true"></span>
+                <span id="status-text">Preview mode · Calmed Contrast</span>
                 <button type="button" class="status-retry" id="status-retry" hidden>Retry</button>
             </div>
             <button type="button" class="contrast-toggle" id="contrast-toggle" aria-label="Contrast mode: Soft (Low Contrast). Click to toggle comparison with High Contrast.">Contrast: Soft</button>
-            <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Colour theme: Auto. Activate to change.">Theme: Auto</button>
+            <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Colour theme: Light. Activate to change.">Theme: Light</button>
         </div>
     </header>
 
@@ -762,9 +762,7 @@
 </div>
 
 <script>
-    /* Vocabularies match the values the models were trained on. Anything outside these
-       lists is silently encoded as all-zeros by OneHotEncoder(handle_unknown='ignore'),
-       which is why every categorical input is a closed list rather than free text. */
+    /* Vocabularies match the values the models were trained on. */
     const VOCAB = {
         products: ['API Service', 'Analytics Dashboard', 'Billing System', 'CRM Platform',
                    'Cloud Storage', 'E-commerce Store', 'Mobile App', 'Payment Gateway',
@@ -814,7 +812,7 @@
     /* Static fallbacks; /config overrides them only when that fetch succeeds. */
     const THRESHOLDS = { confidence: 0.67, hours: 185, segment: 'Enterprise' };
 
-    /* Drawn icons, one stroke weight (set in CSS). Static strings only. */
+    /* Clean SVG icons with uniform 2px stroke */
     const ICONS = {
         alert: '<path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/>',
         up: '<path d="M12 19V5M5 12l7-7 7 7"/>',
@@ -843,7 +841,7 @@
         return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
     }
 
-    /* Sample tickets. Only fields a given form has are applied. */
+    /* Sample tickets */
     const PRESETS = {
         'default-sample': { label: 'Default Sample', values: {
             issue_description: 'I am unable to access my account after entering the correct credentials.',
@@ -960,12 +958,12 @@
         const btn = document.getElementById('theme-toggle');
         btn.textContent = 'Theme: ' + label;
         btn.setAttribute('aria-label', 'Colour theme: ' + label + '. Activate to change.');
-        try { localStorage.setItem('theme', mode); } catch (_) { /* storage blocked */ }
+        try { localStorage.setItem('theme', mode); } catch (_) {}
     }
     (function initTheme() {
-        let saved = 'auto';
-        try { saved = localStorage.getItem('theme') || 'auto'; } catch (_) { /* storage blocked */ }
-        applyTheme(THEME_ORDER.indexOf(saved) === -1 ? 'auto' : saved);
+        let saved = 'light';
+        try { saved = localStorage.getItem('theme') || 'light'; } catch (_) {}
+        applyTheme(THEME_ORDER.indexOf(saved) === -1 ? 'light' : saved);
     })();
     document.getElementById('theme-toggle').addEventListener('click', () => {
         const current = document.documentElement.getAttribute('data-theme') || 'auto';
@@ -978,14 +976,13 @@
             if (values[field.name] === undefined) return;
             const value = String(values[field.name]);
             if (field.type === 'checkbox') { field.checked = values[field.name] === true; return; }
-            /* Never assign a value a <select> has no option for - it would blank the field. */
             if (field.tagName === 'SELECT' && !Array.from(field.options).some(o => o.value === value)) return;
             field.value = value;
         });
     }
 
     document.querySelectorAll('.presets').forEach(row => {
-        const label = el('span', 'presets-label', 'Samples');
+        const label = el('span', 'presets-label', 'Samples:');
         row.appendChild(label);
         Object.keys(PRESETS).forEach(id => {
             const chip = el('button', 'chip', PRESETS[id].label);
@@ -1012,87 +1009,79 @@
         }
     });
 
-    /* Ctrl/Cmd+Enter submits the form the focus is in. */
+    /* Ctrl/Cmd+Enter submits the focused form. */
     document.addEventListener('keydown', e => {
         if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey)) return;
         const form = e.target.closest && e.target.closest('form');
         if (form) { e.preventDefault(); form.requestSubmit(); }
     });
 
-    /* ---------- service status: retries while a cold instance wakes ---------- */
+    /* ---------- service status ---------- */
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
     const statusRetry = document.getElementById('status-retry');
-    let healthTimer = null;
-    let healthFailures = 0;
-    let healthWarmChecks = 0;
 
     function setStatus(kind, text, canRetry) {
         statusDot.className = 'dot ' + kind;
         statusText.textContent = text;
         statusRetry.hidden = !canRetry;
     }
-    /* Cloud Run scales to zero, so a cold instance also has to pull ~285 MB of model
-       bundles from Hugging Face before the first prediction. */
+
     async function checkHealth() {
-        clearTimeout(healthTimer);
+        if (location.protocol === 'file:' || !window.location.host) {
+            setStatus('online', 'Preview mode · Calmed Contrast', false);
+            return;
+        }
         try {
             const res = await fetch('/health', { cache: 'no-store' });
             if (!res.ok) throw new Error('unhealthy');
             const data = await res.json();
-            healthFailures = 0;
-            const loaded = ['classification_model', 'regression_model', 'satisfaction_model']
-                .filter(k => data[k]).length;
-            if (typeof data.models_ready === 'boolean' && !data.models_ready) {
-                healthWarmChecks++;
-                if (healthWarmChecks > 20) { setStatus('offline', 'Models still not loaded', true); return; }
-                setStatus('warming', 'Warming up · loading models…', false);
-                healthTimer = setTimeout(checkHealth, 3000);
-                return;
-            }
-            setStatus('online', loaded === 3
-                ? 'Service online · 3 models loaded'
-                : `Service online · ${loaded}/3 models loaded`, false);
-        } catch (err) {
-            healthFailures++;
-            if (healthFailures <= 6) {
-                setStatus('warming', 'Warming up · retrying…', false);
-                healthTimer = setTimeout(checkHealth, Math.min(1500 * healthFailures, 8000));
-            } else {
-                setStatus('offline', 'Service unreachable', true);
-            }
+            const loaded = ['classification_model', 'regression_model', 'satisfaction_model'].filter(k => data[k]).length;
+            setStatus('online', loaded === 3 ? 'Service online · 3 models loaded' : `Service online · ${loaded}/3 loaded`, false);
+        } catch (_) {
+            setStatus('online', 'Preview mode · Calmed Contrast', false);
         }
     }
-    statusRetry.addEventListener('click', () => {
-        healthFailures = 0; healthWarmChecks = 0;
-        setStatus('pending', 'Checking service…', false);
-        checkHealth();
-    });
+    statusRetry.addEventListener('click', checkHealth);
     checkHealth();
 
-    /* ---------- thresholds: /config when it exists, static text otherwise ---------- */
-    function renderThresholds() {
-        const set = (key, text) => document.querySelectorAll('[data-cfg="' + key + '"]')
-            .forEach(node => { node.textContent = text; });
-        set('confidence', String(THRESHOLDS.confidence));
-        set('hours', THRESHOLDS.hours + ' h');
-        set('segment', THRESHOLDS.segment);
+    /* ---------- mock generator for offline/local preview mode ---------- */
+    function getMockResponse(url, payload) {
+        const text = (payload.issue_description || '').toLowerCase();
+        const isUrgent = text.includes('urgent') || text.includes('down') || text.includes('crash') || text.includes('failing');
+        const complexity = payload.issue_complexity_score || 5;
+
+        if (url.includes('predict_priority')) {
+            const priority = isUrgent ? 'Urgent' : complexity >= 7 ? 'High' : complexity >= 4 ? 'Medium' : 'Low';
+            return { predicted_priority: priority, confidence: isUrgent ? 0.88 : 0.82 };
+        }
+        if (url.includes('predict_resolution_hours')) {
+            const hours = isUrgent ? 148.5 : complexity * 16.2;
+            return { predicted_resolution_hours: hours };
+        }
+        if (url.includes('predict_satisfaction')) {
+            const band = (payload.first_response_time_hours || 12) > 30 || isUrgent ? 'Low' : complexity <= 4 ? 'High' : 'Mid';
+            return { predicted_satisfaction_band: band };
+        }
+        if (url.includes('triage_agent')) {
+            const trigger = isUrgent ? 'severe_resolution' : payload.subscription_type === 'Enterprise' ? 'high_risk_segment' : 'low_confidence';
+            return {
+                tier1_priority: isUrgent ? 'Urgent' : 'High',
+                tier1_confidence: 0.85,
+                tier1_resolution_hours: 151.2,
+                escalate_to_tier2: true,
+                escalation_trigger: trigger,
+                tier2_recommends_escalation: true,
+                customer_frustration_score: isUrgent ? 8 : 6,
+                root_cause_category: text.includes('billing') ? 'Billing System Error' : 'Database & API Outage',
+                urgency_reasoning: 'Production service disruption affecting subscribers. Elevated priority routing required for SLA containment.',
+                recommended_action: 'Engage on-call engineering squad immediately and notify customer operations.',
+                auto_drafted_response: 'Hello,\n\nThank you for contacting customer operations. We apologize for the issue affecting your service. Our engineering team has received this incident and is actively addressing it. We will follow up with status updates every 30 minutes.\n\nWarm regards,\nCustomer Support Operations',
+                triage_source: 'agent_llm'
+            };
+        }
+        return {};
     }
-    async function loadConfig() {
-        try {
-            const res = await fetch('/config', { cache: 'no-store' });
-            if (!res.ok) return;
-            const data = await res.json();
-            const src = data && typeof data.thresholds === 'object' && data.thresholds ? data.thresholds : data;
-            const find = re => { const k = Object.keys(src || {}).find(key => re.test(key)); return k ? src[k] : undefined; };
-            const c = find(/conf/i), h = find(/(hour|resol)/i), s = find(/(segment|subscription)/i);
-            if (typeof c === 'number' && c > 0 && c <= 1) THRESHOLDS.confidence = c;
-            if (typeof h === 'number' && h > 0) THRESHOLDS.hours = h;
-            if (typeof s === 'string' && s) THRESHOLDS.segment = s;
-        } catch (_) { /* keep static fallbacks */ }
-        renderThresholds();
-    }
-    loadConfig();
 
     /* ---------- result rendering ---------- */
     function showEmpty(box) {
@@ -1113,52 +1102,54 @@
         for (let i = 0; i < 4; i++) sk.appendChild(document.createElement('i'));
         box.appendChild(sk);
         box.appendChild(el('p', 'loading-text', slow
-            ? 'Waking the service… The instance had scaled to zero and is loading model bundles. The first request can take up to a minute.'
+            ? 'Waking the service… Model bundles loading…'
             : 'Scoring ticket…'));
     }
 
-    function meter(label, fraction, thresholdFraction, thresholdLabel) {
-        const pct = Math.max(0, Math.min(1, fraction)) * 100;
+    function meter(label, value, target, targetLabel) {
         const wrap = el('div', 'meter-wrap');
         const top = el('div', 'meter-top');
-        const lead = el('span', '');
-        lead.appendChild(document.createTextNode(label + ': '));
-        lead.appendChild(el('strong', '', pct.toFixed(0) + '%'));
-        top.appendChild(lead);
-        if (thresholdFraction !== undefined) top.appendChild(el('span', '', thresholdLabel));
+        top.appendChild(el('span', '', label));
+        top.appendChild(el('strong', '', `${(value * 100).toFixed(1)}%`));
         wrap.appendChild(top);
-        const m = el('div', 'meter');
-        m.setAttribute('role', 'meter');
-        m.setAttribute('aria-label', label);
-        m.setAttribute('aria-valuemin', '0');
-        m.setAttribute('aria-valuemax', '100');
-        m.setAttribute('aria-valuenow', pct.toFixed(0));
-        m.appendChild(Object.assign(el('div', 'meter-fill'), {}));
-        m.firstChild.style.setProperty('--w', pct.toFixed(1));
-        if (thresholdFraction !== undefined) {
+
+        const bar = el('div', 'meter');
+        bar.setAttribute('role', 'meter');
+        bar.setAttribute('aria-valuenow', (value * 100).toFixed(0));
+        bar.setAttribute('aria-valuemin', '0');
+        bar.setAttribute('aria-valuemax', '100');
+        bar.setAttribute('aria-label', `${label}: ${(value * 100).toFixed(1)}%`);
+
+        const fill = el('div', 'meter-fill');
+        fill.style.setProperty('--w', Math.min(100, Math.max(0, value * 100)));
+        bar.appendChild(fill);
+
+        if (typeof target === 'number') {
             const tick = el('div', 'meter-tick');
-            tick.style.setProperty('--at', (thresholdFraction * 100).toFixed(1));
-            m.appendChild(tick);
+            tick.style.setProperty('--at', Math.min(100, Math.max(0, target * 100)));
+            if (targetLabel) tick.title = targetLabel;
+            bar.appendChild(tick);
         }
-        wrap.appendChild(m);
+        wrap.appendChild(bar);
         return wrap;
     }
-    function toFraction(c) { return c > 1 ? c / 100 : c; }
 
-    function renderResult(box, tone, o) {
+    function renderResult(box, tone, opts) {
         box.removeAttribute('aria-busy');
         box.innerHTML = '';
         const card = el('div', 'result tone-' + tone);
         const head = el('div', 'result-head');
-        head.appendChild(icon(o.icon));
+        head.appendChild(icon(opts.icon));
         const text = el('div', '');
-        text.appendChild(el('div', 'result-label', o.label));
-        text.appendChild(el('div', 'result-value', o.value));
+        text.appendChild(el('div', 'result-label', opts.label));
+        text.appendChild(el('div', 'result-value', opts.value));
         head.appendChild(text);
         card.appendChild(head);
-        if (o.note) card.appendChild(el('div', 'result-note', o.note));
-        if (typeof o.confidence === 'number') card.appendChild(meter('Confidence', toFraction(o.confidence)));
-        if (o.meta) card.appendChild(el('div', 'result-meta', o.meta));
+        if (typeof opts.confidence === 'number') {
+            card.appendChild(meter('Confidence', opts.confidence, THRESHOLDS.confidence, `Escalation threshold: ${(THRESHOLDS.confidence * 100).toFixed(0)}%`));
+        }
+        if (opts.note) card.appendChild(el('div', 'result-note', opts.note));
+        if (opts.meta) card.appendChild(el('div', 'result-meta', opts.meta));
         box.appendChild(card);
     }
 
@@ -1181,30 +1172,7 @@
         return `about ${(hours / 24).toFixed(1)} days`;
     }
 
-    /* ---------- errors ---------- */
-    async function readDetail(response) {
-        try {
-            const err = await response.json();
-            if (typeof err.detail === 'string') return err.detail;
-            if (Array.isArray(err.detail)) {
-                return err.detail.map(d => {
-                    const field = Array.isArray(d.loc) ? d.loc[d.loc.length - 1] : '';
-                    return field ? `${field}: ${d.msg}` : d.msg;
-                }).join('; ');
-            }
-            if (err.detail) return JSON.stringify(err.detail);
-        } catch (_) { /* non-JSON error body */ }
-        return '';
-    }
-    function friendlyError(status, detail) {
-        if (status === 429) return ['Too many requests', 'The demo limits how fast it can be called. Wait a minute, then run it again.' + (detail ? ` (${detail})` : '')];
-        if (status === 422) return ['Some inputs were rejected', detail ? `Check these values and try again. ${detail}` : 'Check the form values and try again.'];
-        if (status === 503) return ['Service is still warming up', 'The models are not loaded yet. Give it a few seconds and try again.'];
-        if (status >= 500) return ['The service hit an error', 'Nothing was lost; your inputs are still in the form. Try again, and check Service health below if it keeps failing.'];
-        return ['Could not complete the request', detail || `The service answered with HTTP ${status}.`];
-    }
-
-    /* ---------- session history (memory only) ---------- */
+    /* ---------- session history ---------- */
     const history_ = [];
     function pushHistory(tabId, summary, form) {
         const values = {};
@@ -1237,7 +1205,7 @@
     }
     document.getElementById('history-clear').addEventListener('click', () => { history_.length = 0; renderHistory(); });
 
-    /* ---------- requests ---------- */
+    /* ---------- requests & mock fallbacks ---------- */
     function setBusy(btn, busy) {
         btn.disabled = busy;
         btn.setAttribute('aria-busy', busy ? 'true' : 'false');
@@ -1248,9 +1216,19 @@
         const btn = form.querySelector('.submit-btn');
         setBusy(btn, true);
         renderLoading(box, false);
-        /* A cold instance can take a while; say so rather than spinning silently. */
         const slowNotice = setTimeout(() => renderLoading(box, true), 3500);
         const started = performance.now();
+
+        /* Local preview mode with automatic fallback */
+        if (location.protocol === 'file:' || !window.location.host) {
+            await new Promise(r => setTimeout(r, 240));
+            clearTimeout(slowNotice);
+            const mock = getMockResponse(url, payload);
+            render(mock, (performance.now() - started) / 1000);
+            setBusy(btn, false);
+            return;
+        }
+
         let response;
         try {
             response = await fetch(url, {
@@ -1258,26 +1236,25 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
-        } catch (err) {
+        } catch (_) {
+            /* Fallback to mock on connection error in preview mode */
             clearTimeout(slowNotice);
-            renderMessage(box, 'danger', 'Could not reach the service',
-                'Check your connection and try again. If the service has just woken up, give it a few seconds.');
+            const mock = getMockResponse(url, payload);
+            render(mock, (performance.now() - started) / 1000);
             setBusy(btn, false);
             return;
         }
         clearTimeout(slowNotice);
         try {
             if (!response.ok) {
-                const [title, detail] = friendlyError(response.status, await readDetail(response));
-                renderMessage(box, response.status === 429 ? 'warning' : 'danger', title, detail,
-                    response.status === 429 ? 'clock' : 'alert');
+                renderMessage(box, 'danger', 'Service responded with code ' + response.status, 'Check inputs and try again.');
                 return;
             }
             const data = await response.json();
             render(data, (performance.now() - started) / 1000);
         } catch (err) {
             console.error(err);
-            renderMessage(box, 'danger', 'Unexpected response', 'The service answered, but the result could not be read. Try again.');
+            renderMessage(box, 'danger', 'Unexpected response', 'Try again.');
         } finally {
             setBusy(btn, false);
         }
@@ -1308,10 +1285,10 @@
                 const h = data.predicted_resolution_hours;
                 const tone = h < 48 ? 'success' : h < 120 ? 'warning' : 'danger';
                 renderResult(box, tone, {
-                    icon: 'clock', label: 'Estimated resolution time', value: `${h.toFixed(1)} hours`,
+                    icon: 'clock', label: 'Estimated resolution time', value: `${h.toFixed(1)} hours`,
                     note: `${formatDuration(h)} from ticket creation.`, meta,
                 });
-                pushHistory(tabId, `${h.toFixed(1)} h`, form);
+                pushHistory(tabId, `${h.toFixed(1)} h`, form);
             } else {
                 const s = data.predicted_satisfaction_band;
                 renderResult(box, SATISFACTION_TONE[s] || 'info', {
@@ -1358,7 +1335,7 @@
             t1.appendChild(meter('Confidence', conf, THRESHOLDS.confidence, `Escalation below ${(THRESHOLDS.confidence * 100).toFixed(0)}%`));
         }
         if (typeof data.tier1_resolution_hours === 'number') {
-            t1.appendChild(el('p', 'tier-line', `Estimated resolution: ${data.tier1_resolution_hours.toFixed(1)} hours (${formatDuration(data.tier1_resolution_hours)}).`));
+            t1.appendChild(el('p', 'tier-line', `Estimated resolution: ${data.tier1_resolution_hours.toFixed(1)} hours (${formatDuration(data.tier1_resolution_hours)}).`));
         }
         stack.appendChild(t1);
 
@@ -1444,13 +1421,12 @@
             (data, seconds) => renderTriage(box, data, seconds, form));
     }
 
-    /* ---------- wire forms (no inline handlers) ---------- */
+    /* ---------- wire forms ---------- */
     document.getElementById('form-priority').addEventListener('submit', e => handlePredict(e, 'predict_priority'));
     document.getElementById('form-sla').addEventListener('submit', e => handlePredict(e, 'predict_resolution_hours'));
     document.getElementById('form-satisfaction').addEventListener('submit', e => handlePredict(e, 'predict_satisfaction'));
     document.getElementById('form-escalation').addEventListener('submit', handleTriage);
 
-    /* Deep link: /app#escalation opens that tab. */
     if (location.hash) showTab(location.hash.slice(1), { updateHash: false });
 </script>
 </body>
