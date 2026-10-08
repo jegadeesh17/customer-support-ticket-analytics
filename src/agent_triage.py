@@ -138,7 +138,7 @@ def _describe_llm_failure(exc: Exception) -> str:
         detail = ""
         try:
             error = json.loads(exc.read().decode("utf-8")).get("error", {})
-            detail = str(error.get("code") or error.get("type") or "")[:60]
+            detail = str(error.get("code") or error.get("message") or error.get("type") or "")[:60]
         except Exception:
             pass
         return f"provider returned HTTP {exc.code}" + (f" ({detail})" if detail else "")
@@ -284,6 +284,7 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
             endpoint_url,
             data=json.dumps(payload).encode("utf-8"),
             headers={
+                "User-Agent": "SupportOpsAnalytics/1.0 (CustomerSupportTicketAnalytics)",
                 "Authorization": f"Bearer {key}",
                 "Content-Type": "application/json",
                 "HTTP-Referer": "https://supportops.internal",
