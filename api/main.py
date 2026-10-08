@@ -174,6 +174,7 @@ def debug_models() -> dict:
     import urllib.request
     if not settings.GROQ_API_KEY:
         return {"error": "GROQ_API_KEY is not set", "current_model": settings.GROQ_MODEL}
+    out = {"current_model": settings.GROQ_MODEL}
     try:
         req = urllib.request.Request(
             "https://api.groq.com/openai/v1/models",
@@ -184,12 +185,36 @@ def debug_models() -> dict:
         )
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode())
-            return {
-                "current_model": settings.GROQ_MODEL,
-                "models": sorted([m["id"] for m in data.get("data", [])]),
-            }
+            out["models"] = sorted([m["id"] for m in data.get("data", [])])
     except Exception as exc:
-        return {"error": str(exc), "current_model": settings.GROQ_MODEL}
+        out["models_error"] = str(exc)
+
+    tests = {}
+    for cand in ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]:
+        try:
+            payload = {
+                "model": cand,
+                "messages": [{"role": "user", "content": "Respond strictly with JSON: {\"status\": \"ok\"}"}],
+                "temperature": 0.1,
+                "max_tokens": 50,
+            }
+            chat_req = urllib.request.Request(
+                "https://api.groq.com/openai/v1/chat/completions",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "User-Agent": "SupportOpsAnalytics/1.0 (CustomerSupportTicketAnalytics)",
+                    "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(chat_req, timeout=5) as resp:
+                resp_json = json.loads(resp.read().decode())
+                tests[cand] = resp_json["choices"][0]["message"]["content"]
+        except Exception as exc:
+            tests[cand] = f"error: {exc}"
+    out["candidate_tests"] = tests
+    return out
 
 
 from fastapi.responses import FileResponse

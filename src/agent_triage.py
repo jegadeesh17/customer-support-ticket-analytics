@@ -137,7 +137,18 @@ def _describe_llm_failure(exc: Exception) -> str:
     if isinstance(exc, urllib.error.HTTPError):
         detail = ""
         try:
-            error = json.loads(exc.read().decode("utf-8")).get("error", {})
+            raw = exc.read()
+            if hasattr(exc, "fp") and hasattr(exc.fp, "seek"):
+                try:
+                    exc.fp.seek(0)
+                except Exception:
+                    pass
+            elif hasattr(exc, "seek"):
+                try:
+                    exc.seek(0)
+                except Exception:
+                    pass
+            error = json.loads(raw.decode("utf-8")).get("error", {})
             detail = str(error.get("code") or error.get("message") or error.get("type") or "")[:60]
         except Exception:
             pass
@@ -201,9 +212,10 @@ def _get_configured_providers() -> List[Tuple[str, str, str, str]]:
     providers = []
     if settings.GROQ_API_KEY:
         providers.append(("Groq", "https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, settings.GROQ_MODEL))
-        # Fallback to standard 8b model if primary model is unavailable or mistyped
-        if settings.GROQ_MODEL != "llama-3.1-8b-instant":
-            providers.append(("Groq-Fallback", "https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, "llama-3.1-8b-instant"))
+        # Fallback to secondary model if primary model is unavailable or mistyped
+        fallback_model = "openai/gpt-oss-20b" if settings.GROQ_MODEL != "openai/gpt-oss-20b" else "openai/gpt-oss-120b"
+        if fallback_model != settings.GROQ_MODEL:
+            providers.append(("Groq-Fallback", "https://api.groq.com/openai/v1/chat/completions", settings.GROQ_API_KEY, fallback_model))
     if settings.OPENROUTER_API_KEY:
         providers.append(("OpenRouter", "https://openrouter.ai/api/v1/chat/completions", settings.OPENROUTER_API_KEY, "google/gemini-2.0-flash-001"))
     if settings.OPENAI_API_KEY:
@@ -267,6 +279,7 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
         "}"
     )
 
+    import urllib.error
     import urllib.request
 
     user_content = json.dumps(ticket, indent=2)
@@ -297,13 +310,37 @@ def run_agent_triage(ticket: Dict[str, Any], api_key: Optional[str] = None) -> A
         )
 
         try:
-            with urllib.request.urlopen(req, timeout=5) as response:
-                res_data = json.loads(response.read().decode("utf-8"))
-                content = res_data["choices"][0]["message"]["content"]
-                parsed = json.loads(content)
-                parsed["triage_source"] = "agent_llm"
-                _record_provider_success(name)
-                return AgentTriageResult(**parsed)
+            try:
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    res_data = json.loads(response.read().decode("utf-8"))
+            except urllib.error.HTTPError as exc:
+                # If provider rejects response_format with 400, retry once without it
+                if exc.code == 400 and "response_format" in str(exc.read().decode("utf-8", errors="ignore")):
+                    payload_no_fmt = {k: v for k, v in payload.items() if k != "response_format"}
+                    req_retry = urllib.request.Request(
+                        endpoint_url,
+                        data=json.dumps(payload_no_fmt).encode("utf-8"),
+                        headers=req.headers,
+                        method="POST",
+                    )
+                    with urllib.request.urlopen(req_retry, timeout=5) as retry_resp:
+                        res_data = json.loads(retry_resp.read().decode("utf-8"))
+                else:
+                    raise
+
+            content = res_data["choices"][0]["message"]["content"]
+            clean_content = content.strip()
+            if "```" in clean_content:
+                clean_content = re.sub(r"^```(?:json)?\s*", "", clean_content)
+                clean_content = re.sub(r"\s*```$", "", clean_content)
+            json_match = re.search(r"\{.*\}", clean_content, re.DOTALL)
+            if json_match:
+                clean_content = json_match.group(0)
+
+            parsed = json.loads(clean_content)
+            parsed["triage_source"] = "agent_llm"
+            _record_provider_success(name)
+            return AgentTriageResult(**parsed)
         except Exception as exc:
             _record_provider_failure(name)
             reason = _describe_llm_failure(exc)

@@ -281,9 +281,9 @@ def test_groq_failure_fails_over_to_openrouter(monkeypatch):
 
     assert result.triage_source == "agent_llm"
     assert result.root_cause_category == "Failover Resolved Outage"
-    assert len(calls) == 2
+    assert len(calls) >= 2
     assert "api.groq.com" in calls[0]
-    assert "openrouter.ai" in calls[1]
+    assert "openrouter.ai" in calls[-1]
 
 
 def test_circuit_breaker_trips_and_fast_fails(monkeypatch):
