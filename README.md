@@ -219,6 +219,10 @@ Latency (local, not production): `scripts/benchmark_inference.py --iterations 20
 - [docs/SPEC.md](docs/SPEC.md): technical specification
 - [docs/DEPLOY.md](docs/DEPLOY.md) and [docs/DEMO.md](docs/DEMO.md): deployment and demo walkthroughs
 
+## How this was built
+
+Designed and built by jegadeesh17 with Claude Code. I reviewed and tested all code.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
