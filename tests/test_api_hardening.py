@@ -1,4 +1,4 @@
-"""Tests for M2 hardening: readiness, /config, rate limit, LLM budget, CORS, errors, confidence."""
+"""Tests for API hardening: readiness, /config, rate limit, LLM budget, CORS, errors, confidence."""
 
 import os
 import sys
